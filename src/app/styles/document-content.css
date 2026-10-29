@@ -710,6 +710,24 @@
 :is(.prosemirror-host, .nomo-export) sub { vertical-align: sub; }
 
 /*
+ * 行内按键标记 <kbd>：正文、标题和表格共用一套样式。
+ * 编辑区与 HTML / PDF 导出都走这里，避免导出后变成普通文字。
+ */
+:is(.prosemirror-host, .nomo-export) kbd {
+  display: inline-block;
+  padding: 0.05em 0.4em;
+  border: 1px solid var(--md-editor-border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background: var(--md-editor-code-bg);
+  font-family: var(--md-editor-font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.85em;
+  line-height: 1.35;
+  white-space: nowrap;
+  vertical-align: baseline;
+}
+
+/*
  * 渲染区行号（设置 → 编辑器 → 渲染区行号）。
  * 行号通过节点装饰挂到顶层块上，不参与文字流，也不会被复制或写进 Markdown。
  *

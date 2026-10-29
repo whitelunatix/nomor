@@ -35,6 +35,18 @@ describe('quicklook preview renderer', () => {
     expect(html).toContain('katex');
   });
 
+  it('renders bare URLs and emails as safe links', () => {
+    const html = renderMarkdownPreview(
+      '访问 https://example.com/a_b 或 a@b.com',
+      { fileName: 'demo.md' },
+    );
+
+    expect(html).toContain('href="https://example.com/a_b"');
+    expect(html).toContain('>https://example.com/a_b</a>');
+    expect(html).toContain('href="mailto:a@b.com"');
+    expect(html).toContain('>a@b.com</a>');
+  });
+
   it('renders Mermaid fences to themed SVG diagrams', async () => {
     vi.spyOn(HTMLElement.prototype, 'clientWidth', 'get').mockReturnValue(800);
     vi.spyOn(HTMLElement.prototype, 'clientHeight', 'get').mockReturnValue(600);

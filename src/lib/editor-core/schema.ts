@@ -550,6 +550,8 @@ export const schema = new Schema({
         id: { default: null },
         name: { default: null },
         html: { default: false },
+        /** 由裸链接识别生成；文本未被改动时保存回裸网址而非 `[]()`。 */
+        auto: { default: false },
       },
       inclusive: false,
       parseDOM: [
@@ -627,6 +629,14 @@ export const schema = new Schema({
         toDOM() {
           return ['mark', 0];
         },
+      },
+    })
+    // 行内按键标记：沿用 HTML 的语义标签 <kbd>，不引入新的 Markdown 语法，
+    // 保存时原样写回 <kbd>…</kbd>。
+    .addToEnd('kbd', {
+      parseDOM: [{ tag: 'kbd' }],
+      toDOM() {
+        return ['kbd', 0];
       },
     }),
 });

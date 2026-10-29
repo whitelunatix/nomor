@@ -2,6 +2,7 @@ import MarkdownIt from 'markdown-it';
 import Token from 'markdown-it/lib/token.mjs';
 import { unescapeAll } from 'markdown-it/lib/common/utils.mjs';
 import { normalizeLinkHref } from './link';
+import { registerBareLinkRule } from './bareLinks';
 import { transformCalloutTokens } from './callout/calloutParser';
 import { registerDetailsRule } from './details/detailsSyntax';
 import { maskInlineMarkerPipes, restoreInlineMarkerPipesInTokens } from '../docxmd/inlineMarkers';
@@ -577,6 +578,9 @@ export function createMarkdownTokenizer(options: MarkdownTokenizerOptions = {}):
       { alt: ['paragraph', 'reference', 'blockquote'] },
     );
   }
+
+  // 裸链接先于普通链接规则注册；`[文本](地址)` 仍由 link 规则整体消费。
+  registerBareLinkRule(markdownIt);
 
   if (options.inlineSource) recordInlineSourceRanges(markdownIt);
   return markdownIt;

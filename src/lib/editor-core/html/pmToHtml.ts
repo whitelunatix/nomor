@@ -84,6 +84,9 @@ function wrapWithMarks(node: ProseMirrorNode, content: string): string {
       case 'highlight':
         content = '<mark>' + content + '</mark>';
         break;
+      case 'kbd':
+        content = '<kbd>' + content + '</kbd>';
+        break;
       case 'link': {
         if (mark.attrs.html) {
           content = serializeHtmlAnchorOpen(mark.attrs) + content + '</a>';

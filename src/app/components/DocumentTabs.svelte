@@ -106,6 +106,18 @@
     onWorkspaceItemPointerDown?.(tab.id, event);
   }
 
+  /**
+   * 中键关闭标签页：和点关闭按钮走同一个 requestCloseTab，
+   * 因此未保存确认、组合标签整组关闭等既有流程都照常生效。
+   */
+  function handleTabAuxClick(tab: DisplayTab, event: MouseEvent) {
+    if (event.button !== 1 || workspaceInteractionDisabled) return;
+    // 阻止中键在 WebView 里触发自动滚动或打开链接。
+    event.preventDefault();
+    event.stopPropagation();
+    requestCloseTab(tab, event);
+  }
+
   function guardMenuItems(items: ContextMenuItem[]): ContextMenuItem[] {
     return items.map((item) => ({
       ...item,
@@ -567,6 +579,11 @@
           use:motionIn={{ kind: 'row', y: 5 }}
           on:click={() => void requestTabSwitch(tab.id)}
           on:pointerdown={(event) => handleTabPointerDown(tab, event)}
+          on:auxclick={(event) => handleTabAuxClick(tab, event)}
+          on:mousedown={(event) => {
+            // 中键按下时阻止默认的自动滚动，关闭动作只在 auxclick 里做一次。
+            if (event.button === 1) event.preventDefault();
+          }}
           on:dblclick={() => {
             if (!workspaceInteractionDisabled && tab.preview) pinPreviewTab();
           }}

@@ -60,4 +60,5 @@ export const INLINE_TAG_TO_MARK: Record<string, string> = {
   mark: 'highlight',
   sup: 'superscript',
   sub: 'subscript',
+  kbd: 'kbd',
 };

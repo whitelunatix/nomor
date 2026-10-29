@@ -63,6 +63,7 @@ const INLINE_MARK_MAP: Record<string, string> = {
   mark: 'highlight',
   sup: 'superscript',
   sub: 'subscript',
+  kbd: 'kbd',
 };
 
 /** 图片替代文字保留全部显示内容，格式开闭token不计入文字。 */
@@ -206,6 +207,17 @@ export function createSemanticMarkdownParser(markdownIt: MarkdownIt): SemanticMa
     softbreak: (state) => {
       state.openNode(schema.nodes.hard_break, { soft: true });
       state.closeNode();
+    },
+    link_open: (state, tok) => {
+      // 裸链接需要额外的 auto 标记，普通 `[文本](地址)` 保持默认值。
+      const attrs = createLinkAttrs(tok.attrGet('href'), tok.attrGet('title'));
+      state.openMark(
+        schema.marks.link.create({
+          href: attrs?.href ?? '',
+          title: attrs?.title ?? null,
+          auto: tok.meta?.autoLink === true,
+        }),
+      );
     },
     fence: (state, tok) => {
       const language = tok.info.trim().split(/\s+/)[0]?.toLowerCase();

@@ -4,6 +4,7 @@ import MarkdownIt from 'markdown-it';
 import Token from 'markdown-it/lib/token.mjs';
 import { transformCalloutTokens } from '../lib/editor-core/callout/calloutParser';
 import { normalizeLinkHref } from '../lib/editor-core/link';
+import { registerBareLinkRule } from '../lib/editor-core/bareLinks';
 import { createMermaidDiagramRenderer } from '../lib/services/mermaidDiagramRenderer';
 import {
   bindMermaidFullscreen,
@@ -291,6 +292,8 @@ function createQuickLookMarkdownIt() {
 
   // 先让 markdown-it 识别链接/图片语法，再在 renderer 和 sanitizer 中按 Nomor 的安全边界过滤。
   md.validateLink = (url: string) => Boolean(url.trim());
+  // 与编辑器共用裸链接规则，预览和正文显示同一批链接。
+  registerBareLinkRule(md);
 
   md.core.ruler.after('block', 'nomo_callout', (state) => {
     transformCalloutTokens(state.tokens);

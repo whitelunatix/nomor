@@ -18,6 +18,7 @@
   import { onDestroy, onMount } from 'svelte';
   import { isolateHistory } from '@codemirror/commands';
   import { sourceEmojiSuggestions } from '../../lib/emoji/sourceSuggestions';
+  import { sourceIndentKeymap } from '../../lib/editor-core/sourceIndent';
   import { docxSourceHighlighting } from '../../lib/docxmd/sourceDecorations';
   import { sourceLineNumbers } from '../../lib/docxmd/sourceLineNumbers';
   import {
@@ -119,6 +120,8 @@
     return [
           sourceEmojiSuggestions(),
           historyCompartment.of(history()),
+          // 先于默认按键表注册，Tab / Shift+Tab 才会用于缩进而不是切换焦点。
+          sourceIndentKeymap(),
           keymap.of([...defaultKeymap, ...historyKeymap]),
           EditorView.lineWrapping,
           sourceSpacerField,

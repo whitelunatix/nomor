@@ -17,6 +17,7 @@ import { serializeCallout } from './callout/calloutSerializer';
 import { TOC_START_MARKER, TOC_END_MARKER } from '../toc/tocMarkers';
 import { escapeHtmlAttr } from './markdownTokenizer';
 import { serializeMarkdownLinkDestination, serializeMarkdownLinkTitle } from './link';
+import { bareLinkHrefForText } from './bareLinks';
 import { analyzeInlineSourceText, escapeInlineSourceLiteral, isInlineSourceText, projectInlineSource, readTaskListMarker } from './InlineSourceCodec';
 import { parseInlineMarker } from '../docxmd/inlineMarkers';
 
@@ -460,6 +461,7 @@ const tableMarkdownSerializer = new MarkdownSerializer(
     },
     superscript: { open: '<sup>', close: '</sup>', mixable: true },
     subscript: { open: '<sub>', close: '</sub>', mixable: true },
+    kbd: { open: '<kbd>', close: '</kbd>', mixable: true, expelEnclosingWhitespace: true },
     highlight: {
       open: '<mark>',
       close: '</mark>',
@@ -467,11 +469,14 @@ const tableMarkdownSerializer = new MarkdownSerializer(
       expelEnclosingWhitespace: true,
     },
     link: {
-      open(_state, mark) {
-        return mark.attrs.html ? serializeHtmlAnchorOpen(mark.attrs) : '[';
+      open(_state, mark, parent, index) {
+        if (mark.attrs.html) return serializeHtmlAnchorOpen(mark.attrs);
+        if (isBareAutoLink(mark, parent, index, 'open')) return '';
+        return '[';
       },
-      close(_state, mark) {
+      close(_state, mark, parent, index) {
         if (mark.attrs.html) return '</a>';
+        if (isBareAutoLink(mark, parent, index, 'close')) return '';
         const href = serializeMarkdownLinkDestination(String(mark.attrs.href ?? ''));
         const title = mark.attrs.title
           ? ` "${serializeMarkdownLinkTitle(String(mark.attrs.title))}"`
@@ -521,6 +526,28 @@ const tableCellMarkdownSerializer = new MarkdownSerializer(
 
 wrapSerializerNodes(tableMarkdownSerializer);
 wrapSerializerNodes(tableCellMarkdownSerializer);
+
+/**
+ * 裸链接仅在文本仍是原始网址、且 mark 恰好覆盖这一个文本节点时省略括号。
+ * 用户改过文本后回退为普通链接，避免保存时丢掉地址。
+ */
+function isBareAutoLink(
+  mark: Mark,
+  parent: ProseMirrorNode,
+  index: number,
+  side: 'open' | 'close',
+): boolean {
+  if (mark.attrs.auto !== true) return false;
+  const nodeIndex = side === 'open' ? index : index - 1;
+  if (nodeIndex < 0 || nodeIndex >= parent.childCount) return false;
+  const node = parent.child(nodeIndex);
+  if (!node.isText || !mark.isInSet(node.marks)) return false;
+  if (bareLinkHrefForText(node.text ?? '') !== mark.attrs.href) return false;
+  return (
+    (nodeIndex === 0 || !mark.isInSet(parent.child(nodeIndex - 1).marks)) &&
+    (nodeIndex + 1 >= parent.childCount || !mark.isInSet(parent.child(nodeIndex + 1).marks))
+  );
+}
 
 function emphasisNeedsHtml(mark: Mark, parent: ProseMirrorNode, index: number): boolean {
   let from = Math.min(index, parent.childCount - 1);

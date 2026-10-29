@@ -151,6 +151,47 @@ describe('markdown serialization', () => {
     );
   });
 
+  it('serializes kbd marks as kbd tags', () => {
+    const doc = schema.nodes.doc.create(null, [
+      schema.nodes.paragraph.create(null, [schema.text('Ctrl+S', [schema.marks.kbd.create()])]),
+    ]);
+
+    expect(serializeMarkdown(doc).trim()).toBe('<kbd>Ctrl+S</kbd>');
+  });
+
+  it('preserves kbd tags as source and projects key semantics', () => {
+    const doc = parseMarkdown('<kbd>Ctrl+S</kbd>');
+    expect(doc.textContent).toBe('<kbd>Ctrl+S</kbd>');
+    expect(isInlineSourceText(doc.firstChild!.firstChild!)).toBe(true);
+    let hasKbd = false;
+    projectInlineSource(doc).descendants((node) => {
+      if (!node.isText) return true;
+      hasKbd = node.marks.some((mark) => mark.type === schema.marks.kbd);
+      return !hasKbd;
+    });
+
+    expect(hasKbd).toBe(true);
+    expect(serializeMarkdown(doc).trim()).toBe('<kbd>Ctrl+S</kbd>');
+  });
+
+  it('keeps kbd marks inside headings and table cells', () => {
+    expect(serializeMarkdown(parseMarkdown('# 按 <kbd>Esc</kbd> 退出')).trim()).toBe(
+      '# 按 <kbd>Esc</kbd> 退出',
+    );
+
+    const doc = schema.nodes.doc.create(null, [
+      schema.nodes.table.create(null, [
+        schema.nodes.table_row.create(null, [
+          schema.nodes.table_header.create(null, [
+            schema.nodes.paragraph.create(null, [schema.text('键', [schema.marks.kbd.create()])]),
+          ]),
+        ]),
+      ]),
+    ]);
+
+    expect(serializeMarkdown(doc).trim()).toBe('| <kbd>键</kbd> |\n| :--- |');
+  });
+
   it('round trips single-line footnotes', () => {
     const input = '正文内容[^1]\n\n[^1]: 脚注内容';
 
@@ -169,6 +210,74 @@ describe('markdown serialization', () => {
 
     expect(serializeMarkdown(parseMarkdown(plain)).trim()).toBe(plain);
     expect(serializeMarkdown(parseMarkdown(titled)).trim()).toBe(titled);
+  });
+
+  it('round trips GFM bare links without adding bracket syntax', () => {
+    const input = '访问 https://example.com/a_b 或 www.example.com 或 a@b.com。';
+    const doc = parseMarkdown(input);
+    const links: Array<{ href: string; auto: boolean }> = [];
+    doc.descendants((node) => {
+      if (!node.isText) return true;
+      for (const mark of node.marks) {
+        if (mark.type.name === 'link') {
+          links.push({ href: String(mark.attrs.href), auto: mark.attrs.auto === true });
+        }
+      }
+      return true;
+    });
+
+    expect(links).toEqual([
+      { href: 'https://example.com/a_b', auto: true },
+      { href: 'http://www.example.com', auto: true },
+      { href: 'mailto:a@b.com', auto: true },
+    ]);
+    expect(serializeMarkdown(doc).trim()).toBe(input);
+  });
+
+  it('does not auto link inside code spans or explicit links', () => {
+    const input = '`https://example.com` [https://example.com](https://example.com)';
+    const doc = parseMarkdown(input);
+    let autoLinks = 0;
+    doc.descendants((node) => {
+      if (!node.isText) return true;
+      autoLinks += node.marks.filter(
+        (mark) => mark.type.name === 'link' && mark.attrs.auto === true,
+      ).length;
+      return true;
+    });
+
+    expect(autoLinks).toBe(0);
+    expect(serializeMarkdown(doc).trim()).toBe(input);
+  });
+
+  it('keeps the sentence punctuation outside auto links', () => {
+    const input = '见 https://example.com/a. 结束';
+    const doc = parseMarkdown(input);
+    let href = '';
+    doc.descendants((node) => {
+      if (!node.isText) return true;
+      const link = node.marks.find((mark) => mark.type.name === 'link');
+      if (link) href = String(link.attrs.href);
+      return true;
+    });
+
+    expect(href).toBe('https://example.com/a');
+    expect(serializeMarkdown(doc).trim()).toBe(input);
+  });
+
+  it('falls back to explicit link syntax after the auto link text is edited', () => {
+    const doc = schema.nodes.doc.create(
+      null,
+      schema.nodes.paragraph.create(
+        null,
+        schema.text('说明', [
+          schema.marks.link.create({ href: 'https://example.com', auto: true }),
+          schema.marks.inline_source.create(),
+        ]),
+      ),
+    );
+
+    expect(serializeMarkdown(doc).trim()).toBe('[说明](https://example.com)');
   });
 
   it('round trips Markdown images with alt and optional title', () => {

@@ -11,7 +11,8 @@ export type InlineFormatName =
   | 'underline'
   | 'highlight'
   | 'superscript'
-  | 'subscript';
+  | 'subscript'
+  | 'kbd';
 
 export interface InlineSourceSpan {
   type: InlineFormatName;
@@ -42,6 +43,7 @@ const formatNames = new Set<InlineFormatName>([
   'highlight',
   'superscript',
   'subscript',
+  'kbd',
 ]);
 const htmlFormats: Record<string, InlineFormatName> = {
   strong: 'strong',
@@ -56,6 +58,7 @@ const htmlFormats: Record<string, InlineFormatName> = {
   mark: 'highlight',
   sup: 'superscript',
   sub: 'subscript',
+  kbd: 'kbd',
 };
 const tokenizer = createMarkdownTokenizer({ inlineSource: true });
 const blockAnalysis = new WeakMap<ProseMirrorNode, InlineSourceAnalysis>();
@@ -107,6 +110,7 @@ export function inlineFormatDelimiters(
     highlight: ['<mark>', '</mark>'],
     superscript: ['^', '^'],
     subscript: ['~', '~'],
+    kbd: ['<kbd>', '</kbd>'],
   };
   const [open, close] = pair[type];
   return { open, close };
