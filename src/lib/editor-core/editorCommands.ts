@@ -1386,12 +1386,13 @@ function insertFootnote(view: EditorView): boolean {
   const { state } = view;
   const id = createNextFootnoteId(state.doc);
   const footnoteRef = schema.nodes.footnote_ref.create({ id });
-  const footnoteDef = schema.nodes.footnote_def.create({ id });
+  // 定义正文是块级内容，显式创建首个段落，光标才能落进可编辑的文本块。
+  const footnoteDef = schema.nodes.footnote_def.create({ id }, schema.nodes.paragraph.create());
 
   let tr = state.tr.replaceSelectionWith(footnoteRef, false);
   const defPos = tr.doc.content.size;
   tr = tr.insert(defPos, footnoteDef);
-  tr = tr.setSelection(TextSelection.create(tr.doc, defPos + 1));
+  tr = tr.setSelection(TextSelection.create(tr.doc, defPos + 2));
   view.dispatch(tr.scrollIntoView());
   return true;
 }

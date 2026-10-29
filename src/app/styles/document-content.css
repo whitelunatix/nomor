@@ -813,6 +813,12 @@ details.callout-card > summary.callout-header::-webkit-details-marker {
   min-width: 0;
   overflow-wrap: anywhere;
 }
+.footnote-def-content > :first-child {
+  margin-top: 0;
+}
+.footnote-def-content > :last-child {
+  margin-bottom: 0;
+}
 
 :is(.prosemirror-host, .nomo-export) sup:not(.footnote-ref),
 :is(.prosemirror-host, .nomo-export) sub {

@@ -300,7 +300,8 @@ export const schema = new Schema({
         ],
       },
       footnote_def: {
-        content: 'inline*',
+        // 支持定义内多段落、列表和代码块；定义标记单独占首行。
+        content: 'block+',
         group: 'block',
         defining: true,
         attrs: {
@@ -312,7 +313,7 @@ export const schema = new Schema({
             'div',
             { class: 'footnote-def', 'data-footnote-id': id },
             ['span', { class: 'footnote-def-marker' }, id],
-            ['span', { class: 'footnote-def-content', 'data-placeholder': t.footnoteContentPlaceholder() }, 0],
+            ['div', { class: 'footnote-def-content', 'data-placeholder': t.footnoteContentPlaceholder() }, 0],
           ];
         },
         parseDOM: [

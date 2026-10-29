@@ -7,6 +7,23 @@ import { stripCalloutMarkerFromSource, transformCalloutTokens } from './callout/
 import { registerDetailsRule } from './details/detailsSyntax';
 import { maskInlineMarkerPipes, restoreInlineMarkerPipesInTokens } from '../docxmd/inlineMarkers';
 
+/**
+ * 脚注正文可能包含任意块，用同一套规则单独解析后再嵌入主 token 流。
+ * 复用当前 tokenizer 实例，才能继承 inlineSource / 统计位置等实例级配置。
+ */
+let footnoteParseDepth = 0;
+
+function parseFootnoteBody(markdownIt: MarkdownIt, body: string): Token[] {
+  // 极深嵌套按普通文本处理，避免脚注里再定义脚注时无限递归。
+  if (footnoteParseDepth >= 2) return [];
+  footnoteParseDepth += 1;
+  try {
+    return markdownIt.parse(body, {});
+  } finally {
+    footnoteParseDepth -= 1;
+  }
+}
+
 export const WRAPPED_IMAGE_HTML =
   /<p\s+align="(left|center|right)"\s*>\s*(<img\s+[^>]+(?:\/>|>))\s*<\/p>/gi;
 export const STANDALONE_IMAGE_HTML = /^<img\s+[^>]+(?:\/>|>)\s*$/gim;
@@ -328,27 +345,78 @@ export function createMarkdownTokenizer(options: MarkdownTokenizerOptions = {}):
       if (silent) return true;
 
       const id = match[1];
-      const content = match[2] ?? '';
+      const lines: string[] = [match[2] ?? ''];
+      // 子解析的行号要还原成外层源码行号，写作统计等按行映射的功能依赖它。
+      const lineSources: number[] = [startLine];
+      let line = startLine + 1;
+      let afterBlankLine = false;
+      while (line < state.lineMax) {
+        const lineStart = state.bMarks[line];
+        const shift = state.tShift[line];
+        const lineEnd = state.eMarks[line];
+        const text = state.src.slice(lineStart + shift, lineEnd);
+        if (!text.trim()) {
+          lines.push('');
+          lineSources.push(line);
+          afterBlankLine = true;
+          line += 1;
+          continue;
+        }
+        if (shift >= 4) {
+          // 续行缩进 4 个空格属于脚注定义；去掉一级缩进后交给完整块解析器。
+          lines.push(state.src.slice(lineStart + 4, lineEnd));
+          lineSources.push(line);
+          afterBlankLine = false;
+          line += 1;
+          continue;
+        }
+        // 首段后的未缩进行只有在没有空行时才是延迟续行。
+        if (afterBlankLine) break;
+        lines[0] += `\n${text}`;
+        lineSources.push(line);
+        line += 1;
+      }
+      // 尾部空行属于块间分隔，不属于定义正文。
+      while (lines.length > 1 && lines[lines.length - 1] === '') {
+        lines.pop();
+        lineSources.pop();
+      }
+
       const openToken = state.push('footnote_def_open', 'div', 1);
       openToken.block = true;
-      openToken.map = [startLine, startLine + 1];
+      openToken.map = [startLine, line];
       openToken.markup = '[^]:';
       openToken.meta = { id };
 
-      const inlineToken = state.push('inline', '', 0);
-      inlineToken.content = content;
-      inlineToken.children = [];
-      inlineToken.map = [startLine, startLine + 1];
-      inlineToken.meta = {
-        statsContentColumn: state.tShift[startLine] + lineText.length - content.length,
-      };
+      const bodyTokens = parseFootnoteBody(markdownIt, lines.join('\n'));
+      const bodyColumn = state.tShift[startLine] + lineText.length - (match[2] ?? '').length;
+      for (const token of bodyTokens) {
+        if (token.map) {
+          const relativeStart = token.map[0];
+          const from = lineSources[relativeStart] ?? lineSources[lineSources.length - 1] ?? startLine;
+          const to = token.map[1] < lineSources.length
+            ? lineSources[token.map[1]]
+            : (lineSources[lineSources.length - 1] ?? startLine) + 1;
+          token.map = [from, to];
+          // 首行正文在 `[^id]: ` 之后，统计与源码映射需要跳过定义标记。
+          if (token.type === 'inline' && relativeStart === 0) {
+            token.meta = { ...token.meta, statsContentColumn: bodyColumn };
+          }
+        }
+        // 外层 core 的 inline 规则会再次分词并追加到 children，这里先清空避免重复。
+        if (token.type === 'inline') token.children = [];
+        // 子解析从 0 开始计层级，嵌入外层时整体偏移。
+        token.level += state.level;
+        state.tokens.push(token);
+      }
 
       const closeToken = state.push('footnote_def_close', 'div', -1);
       closeToken.block = true;
+      closeToken.map = [startLine, line];
       closeToken.markup = '[^]:';
       closeToken.meta = { id };
 
-      state.line = startLine + 1;
+      state.line = line;
       return true;
     },
   );

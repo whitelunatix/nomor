@@ -372,9 +372,21 @@ const tableMarkdownSerializer = new MarkdownSerializer(
     },
     footnote_def(state, node) {
       state.ensureNewLine();
-      state.write(`[^${node.attrs.id}]: `);
-      state.renderInline(node);
-      state.closeBlock(node);
+      state.write(`[^${node.attrs.id}]:`);
+      const first = node.firstChild;
+      if (first?.type.name === 'paragraph') {
+        // 首个段落与标记同一行，后续块统一缩进 4 个空格。
+        state.write(' ');
+        state.wrapBlock('    ', '', node, () => {
+          state.renderInline(first);
+          state.closeBlock(first);
+          for (let index = 1; index < node.childCount; index += 1) {
+            state.render(node.child(index), node, index);
+          }
+        });
+      } else {
+        state.wrapBlock('    ', '', node, () => state.renderContent(node));
+      }
     },
     text(state, node, parent) {
       if (isInlineSourceText(node)) {

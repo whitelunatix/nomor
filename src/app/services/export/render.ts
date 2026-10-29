@@ -114,7 +114,7 @@ export async function renderExportBody(snapshot: ExportSnapshot, options: Export
     definition.id = `nomo-fn-${id}`;
     const marker = element('a', 'footnote-def-marker', String(node.attrs.id)) as HTMLAnchorElement;
     marker.href = `#${encodeURIComponent(`nomo-fnref-${id}-1`)}`;
-    const body = element('span', 'footnote-def-content');
+    const body = element('div', 'footnote-def-content');
     definition.append(marker, body);
     return { dom: definition, contentDOM: body };
   };

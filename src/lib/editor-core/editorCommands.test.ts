@@ -833,7 +833,8 @@ describe('editorCommands', () => {
     expect(view.state.doc.child(0).child(1).type.name).toBe('footnote_ref');
     expect(view.state.doc.child(0).child(1).attrs.id).toBe('1');
     expect(view.state.doc.child(1).attrs.id).toBe('1');
-    expect(view.state.selection.$from.parent.type.name).toBe('footnote_def');
+    expect(view.state.selection.$from.parent.type.name).toBe('paragraph');
+    expect(view.state.selection.$from.node(view.state.selection.$from.depth - 1).type.name).toBe('footnote_def');
 
     view.destroy();
     target.remove();
@@ -846,8 +847,8 @@ describe('editorCommands', () => {
         schema.nodes.footnote_ref.create({ id: 'note' }),
         schema.nodes.footnote_ref.create({ id: '2' }),
       ]),
-      schema.nodes.footnote_def.create({ id: 'note' }, schema.text('非数字')),
-      schema.nodes.footnote_def.create({ id: '2' }, schema.text('第二条')),
+      schema.nodes.footnote_def.create({ id: 'note' }, schema.nodes.paragraph.create(null, schema.text('非数字'))),
+      schema.nodes.footnote_def.create({ id: '2' }, schema.nodes.paragraph.create(null, schema.text('第二条'))),
     ]);
     const target = document.createElement('div');
     document.body.appendChild(target);
@@ -884,7 +885,8 @@ describe('editorCommands', () => {
 
     target.querySelector<HTMLElement>('.footnote-ref')!.click();
 
-    expect(view.state.selection.$from.parent.type.name).toBe('footnote_def');
+    expect(view.state.selection.$from.parent.type.name).toBe('paragraph');
+    expect(view.state.selection.$from.node(view.state.selection.$from.depth - 1).type.name).toBe('footnote_def');
 
     view.destroy();
     target.remove();
@@ -900,7 +902,7 @@ describe('editorCommands', () => {
         schema.text('第二处'),
         schema.nodes.footnote_ref.create({ id: '1' }),
       ]),
-      schema.nodes.footnote_def.create({ id: '1' }, schema.text('说明')),
+      schema.nodes.footnote_def.create({ id: '1' }, schema.nodes.paragraph.create(null, schema.text('说明'))),
     ]);
     const target = document.createElement('div');
     document.body.appendChild(target);
@@ -1104,6 +1106,22 @@ describe('editorCommands', () => {
 
       destroyView(view);
     });
+
+    it('脚注定义内回车时在定义内部新增段落', () => {
+      // 光标在脚注首段文本末尾：footnote_def(1) + paragraph 起始(1) + “脚注”(2)。
+      const view = createMarkdownCommandView('[^1]: 脚注', (doc) => TextSelection.create(doc, 4));
+
+      expect(splitBlockExitHeading(view.state, view.dispatch.bind(view))).toBe(true);
+
+      const doc = view.state.doc;
+      expect(doc.childCount).toBe(1);
+      expect(doc.child(0).type.name).toBe('footnote_def');
+      expect(doc.child(0).childCount).toBe(2);
+      expect(doc.child(0).child(0).textContent).toBe('脚注');
+      expect(doc.child(0).child(1).type.name).toBe('paragraph');
+
+      destroyView(view);
+    });
   });
 });
 
@@ -1126,6 +1144,6 @@ function createFootnoteDoc(): PmNode {
       schema.text('正文'),
       schema.nodes.footnote_ref.create({ id: '1' }),
     ]),
-    schema.nodes.footnote_def.create({ id: '1' }, schema.text('脚注说明')),
+    schema.nodes.footnote_def.create({ id: '1' }, schema.nodes.paragraph.create(null, schema.text('脚注说明'))),
   ]);
 }

@@ -204,6 +204,32 @@ describe('markdown serialization', () => {
     expect(serializeMarkdown(parseMarkdown(input))).toBe(input);
   });
 
+  it('round trips multi-paragraph footnotes with lists and code', () => {
+    const input = '正文[^1]\n\n[^1]: 第一段\n\n    第二段\n\n    - 列表一\n    - 列表二\n\n    ```js\n    const a = 1;\n    ```';
+    const doc = parseMarkdown(input);
+    const definition = doc.child(1);
+
+    expect(definition.type.name).toBe('footnote_def');
+    expect(definition.childCount).toBe(4);
+    expect(definition.child(0).type.name).toBe('paragraph');
+    expect(definition.child(1).type.name).toBe('paragraph');
+    expect(definition.child(2).type.name).toBe('bullet_list');
+    expect(definition.child(3).type.name).toBe('code_block');
+    expect(serializeMarkdown(doc)).toBe(input);
+  });
+
+  it('parses lazy continuation lines and stops at the following paragraph', () => {
+    const input = '[^a]: 第一段\n延迟续行\n\n    第二段\n\n后面的正文';
+    const doc = parseMarkdown(input);
+    const definition = doc.child(0);
+
+    expect(definition.type.name).toBe('footnote_def');
+    expect(definition.child(0).textContent).toBe('第一段延迟续行');
+    expect(definition.childCount).toBe(2);
+    expect(doc.child(1).type.name).toBe('paragraph');
+    expect(doc.child(1).textContent).toBe('后面的正文');
+  });
+
   it('round trips Markdown links with optional titles', () => {
     const plain = '[链接](https://example.com)';
     const titled = '[链接](https://example.com "说明")';

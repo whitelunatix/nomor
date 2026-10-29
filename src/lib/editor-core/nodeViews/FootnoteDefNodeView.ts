@@ -36,7 +36,7 @@ export class FootnoteDefNodeView {
       this.jumpToFirstReference();
     });
 
-    this.contentDOM = document.createElement('span');
+    this.contentDOM = document.createElement('div');
     this.contentDOM.className = 'footnote-def-content';
 
     this.dom.append(this.marker, this.contentDOM);
