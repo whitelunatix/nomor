@@ -541,7 +541,7 @@ mod tests {
 
         let paths = collect_markdown_paths_from_args(
             vec![
-                "Nomo.exe".to_string(),
+                "Nomor.exe".to_string(),
                 md.to_string_lossy().to_string(),
                 ignored.to_string_lossy().to_string(),
             ],
@@ -562,7 +562,7 @@ mod tests {
 
         let targets = collect_external_open_targets_from_args(
             vec![
-                "Nomo.exe".to_string(),
+                "Nomor.exe".to_string(),
                 "--nomo-shell-open".to_string(),
                 md.to_string_lossy().to_string(),
             ],
@@ -585,7 +585,7 @@ mod tests {
         fs::write(&json, "{}").unwrap();
 
         let paths = collect_markdown_paths_from_args(
-            vec!["Nomo.exe".to_string(), json.to_string_lossy().to_string()],
+            vec!["Nomor.exe".to_string(), json.to_string_lossy().to_string()],
             None,
         );
 
@@ -604,7 +604,7 @@ mod tests {
         fs::write(&txt, "plain text").unwrap();
 
         let paths = collect_markdown_paths_from_args(
-            vec!["Nomo.exe".to_string(), txt.to_string_lossy().to_string()],
+            vec!["Nomor.exe".to_string(), txt.to_string_lossy().to_string()],
             None,
         );
 
@@ -623,7 +623,7 @@ mod tests {
         fs::write(&md, "# ok").unwrap();
 
         let paths = collect_markdown_paths_from_args(
-            vec!["Nomo.exe".to_string(), "demo.markdown".to_string()],
+            vec!["Nomor.exe".to_string(), "demo.markdown".to_string()],
             Some(dir.clone()),
         );
 
@@ -643,7 +643,7 @@ mod tests {
 
         let targets = collect_external_open_targets_from_args(
             vec![
-                "Nomo.exe".to_string(),
+                "Nomor.exe".to_string(),
                 dir.to_string_lossy().to_string(),
                 md.to_string_lossy().to_string(),
             ],

@@ -120,19 +120,19 @@ jobs:
         with:
           ref: main
 
-      - name: Refresh Casks/nomo.rb
+      - name: Refresh Casks/nomor.rb
         env:
           TAG: ${{ github.ref_name }}
         run: |
           version="${TAG#v}"
-          url="https://github.com/nomo-md/nomo/releases/download/v${version}/Nomo_${version}_aarch64.dmg"
+          url="https://github.com/whitelunatix/nomor/releases/download/v${version}/Nomor_${version}_aarch64.dmg"
           curl -fsSL -o nomo.dmg "$url"
           sha=$(sha256sum nomo.dmg | cut -d' ' -f1)
-          sed -i "s/^  version \".*\"/  version \"${version}\"/" Casks/nomo.rb
-          sed -i "s/^  sha256 \".*\"/  sha256 \"${sha}\"/" Casks/nomo.rb
+          sed -i "s/^  version \".*\"/  version \"${version}\"/" Casks/nomor.rb
+          sed -i "s/^  sha256 \".*\"/  sha256 \"${sha}\"/" Casks/nomor.rb
           rm -f nomo.dmg
 
       - uses: stefanzweifel/git-auto-commit-action@v5
         with:
           commit_message: 'chore: update Homebrew cask for ${{ github.ref_name }}'
-          file_pattern: Casks/nomo.rb
+          file_pattern: Casks/nomor.rb

@@ -629,7 +629,7 @@ fn build_command(command: &str, args: &[String], env: &BTreeMap<String, String>)
         }
     });
 
-    // Job Object：Nomo 退出时由系统结束整棵子进程树，避免留下孤儿 MCP 进程。
+    // Job Object：Nomor 退出时由系统结束整棵子进程树，避免留下孤儿 MCP 进程。
     // CreationFlags 和 JobObject 必须配合使用，否则 CREATE_NO_WINDOW 会被后者覆盖。
     #[cfg(windows)]
     {

@@ -2,22 +2,22 @@ use crate::models::{DesktopActionPayload, MarkdownAssociationStatus, WindowsCont
 use tauri::{AppHandle, Runtime};
 
 #[cfg(target_os = "windows")]
-const NOMO_MARKDOWN_PROG_ID: &str = "Nomo.Markdown";
+const NOMO_MARKDOWN_PROG_ID: &str = "Nomor.Markdown";
 
 #[cfg(target_os = "windows")]
-const APP_NAME: &str = "Nomo";
+const APP_NAME: &str = "Nomor";
 
 #[cfg(target_os = "windows")]
-const APP_CAPABILITIES_KEY: &str = "HKCU\\Software\\Nomo\\Capabilities";
+const APP_CAPABILITIES_KEY: &str = "HKCU\\Software\\Nomor\\Capabilities";
 
 #[cfg(target_os = "windows")]
 const REGISTERED_APPLICATIONS_KEY: &str = "HKCU\\Software\\RegisteredApplications";
 
 #[cfg(target_os = "windows")]
-const CONTEXT_MENU_COMMAND_NAME: &str = "Nomo.Open";
+const CONTEXT_MENU_COMMAND_NAME: &str = "Nomor.Open";
 
 #[cfg(target_os = "windows")]
-const FOLDER_CONTEXT_MENU_COMMAND_NAME: &str = "Nomo.OpenFolder";
+const FOLDER_CONTEXT_MENU_COMMAND_NAME: &str = "Nomor.OpenFolder";
 
 #[cfg(target_os = "windows")]
 pub(crate) fn get_markdown_file_association_status<R: Runtime>(
@@ -26,11 +26,11 @@ pub(crate) fn get_markdown_file_association_status<R: Runtime>(
     let start = std::time::Instant::now();
     let locale = crate::i18n::effective_locale(app);
     let exe_path = std::env::current_exe()
-        .map_err(|error| format!("读取 Nomo 可执行文件路径失败：{error}"))?;
+        .map_err(|error| format!("读取 Nomor 可执行文件路径失败：{error}"))?;
     let exe_file_name = exe_path
         .file_name()
         .and_then(|name| name.to_str())
-        .unwrap_or("nomo.exe")
+        .unwrap_or("nomor.exe")
         .to_ascii_lowercase();
 
     let user_choice_prog_id = query_reg_value(
@@ -89,12 +89,12 @@ pub(crate) fn register_markdown_file_association<R: Runtime>(
     }
 
     let exe_path = std::env::current_exe()
-        .map_err(|error| format!("读取 Nomo 可执行文件路径失败：{error}"))?;
+        .map_err(|error| format!("读取 Nomor 可执行文件路径失败：{error}"))?;
     let exe = exe_path.to_string_lossy().to_string();
     let exe_file_name = exe_path
         .file_name()
         .and_then(|name| name.to_str())
-        .unwrap_or("nomo.exe")
+        .unwrap_or("nomor.exe")
         .to_string();
     let open_command = format!("\"{exe}\" \"%1\"");
     let icon_value = format!("\"{exe}\",0");
@@ -141,7 +141,7 @@ pub(crate) fn get_windows_context_menu_status<R: Runtime>(
     }
 
     let exe_path = std::env::current_exe()
-        .map_err(|error| format!("读取 Nomo 可执行文件路径失败：{error}"))?;
+        .map_err(|error| format!("读取 Nomor 可执行文件路径失败：{error}"))?;
     let exe = exe_path.to_string_lossy().to_string();
     let registered = is_windows_context_menu_registered(&exe)?;
     let message = if registered {
@@ -178,7 +178,7 @@ pub(crate) fn register_windows_context_menu<R: Runtime>(
     }
 
     let exe_path = std::env::current_exe()
-        .map_err(|error| format!("读取 Nomo 可执行文件路径失败：{error}"))?;
+        .map_err(|error| format!("读取 Nomor 可执行文件路径失败：{error}"))?;
     let exe = exe_path.to_string_lossy().to_string();
     let open_command = format!("\"{exe}\" \"%1\"");
     let background_open_command = format!("\"{exe}\" \"%V\"");
@@ -248,21 +248,21 @@ pub(crate) fn unregister_markdown_file_association<R: Runtime>(
         });
     }
 
-    // 步骤1：删除 Nomo.Markdown ProgId
-    let _ = run_reg_delete("HKCU\\Software\\Classes\\Nomo.Markdown", &["/f"]);
+    // 步骤1：删除 Nomor.Markdown ProgId
+    let _ = run_reg_delete("HKCU\\Software\\Classes\\Nomor.Markdown", &["/f"]);
     // 步骤2：删除 Applications 下的 nomo.exe 条目
     let exe_path = std::env::current_exe()
-        .map_err(|error| format!("读取 Nomo 可执行文件路径失败：{error}"))?;
+        .map_err(|error| format!("读取 Nomor 可执行文件路径失败：{error}"))?;
     let exe_file_name = exe_path
         .file_name()
         .and_then(|name| name.to_str())
-        .unwrap_or("nomo.exe")
+        .unwrap_or("nomor.exe")
         .to_string();
     let _ = run_reg_delete(
         &format!("HKCU\\Software\\Classes\\Applications\\{exe_file_name}"),
         &["/f"],
     );
-    // 步骤3：清理 .md 默认值（如果是 Nomo.Markdown）
+    // 步骤3：清理 .md 默认值（如果是 Nomor.Markdown）
     if let Ok(Some(default_prog)) = query_reg_value("HKCU\\Software\\Classes\\.md", "") {
         if prog_id_matches_nomo(&default_prog, &exe_file_name) {
             let _ = run_reg_delete("HKCU\\Software\\Classes\\.md", &["/ve", "/f"]);
@@ -274,7 +274,7 @@ pub(crate) fn unregister_markdown_file_association<R: Runtime>(
             let _ = run_reg_delete("HKCU\\Software\\Classes\\.markdown", &["/ve", "/f"]);
         }
     }
-    // 步骤5：删除 OpenWithProgids 中的 Nomo.Markdown
+    // 步骤5：删除 OpenWithProgids 中的 Nomor.Markdown
     let _ = run_reg_delete(
         "HKCU\\Software\\Classes\\.md\\OpenWithProgids",
         &["/v", NOMO_MARKDOWN_PROG_ID, "/f"],
@@ -285,10 +285,10 @@ pub(crate) fn unregister_markdown_file_association<R: Runtime>(
     );
     // 步骤6：删除 Capabilities 和 RegisteredApplications
     let _ = run_reg_delete(
-        "HKCU\\Software\\Nomo\\Capabilities\\FileAssociations",
+        "HKCU\\Software\\Nomor\\Capabilities\\FileAssociations",
         &["/f"],
     );
-    let _ = run_reg_delete("HKCU\\Software\\Nomo\\Capabilities", &["/f"]);
+    let _ = run_reg_delete("HKCU\\Software\\Nomor\\Capabilities", &["/f"]);
     let _ = run_reg_delete(REGISTERED_APPLICATIONS_KEY, &["/v", APP_NAME, "/f"]);
 
     Ok(DesktopActionPayload {
@@ -318,19 +318,19 @@ pub(crate) fn unregister_windows_context_menu<R: Runtime>(
     }
 
     let _ = run_reg_delete(
-        "HKCU\\Software\\Classes\\SystemFileAssociations\\.md\\shell\\Nomo.Open",
+        "HKCU\\Software\\Classes\\SystemFileAssociations\\.md\\shell\\Nomor.Open",
         &["/f"],
     );
     let _ = run_reg_delete(
-        "HKCU\\Software\\Classes\\SystemFileAssociations\\.markdown\\shell\\Nomo.Open",
+        "HKCU\\Software\\Classes\\SystemFileAssociations\\.markdown\\shell\\Nomor.Open",
         &["/f"],
     );
     let _ = run_reg_delete(
-        "HKCU\\Software\\Classes\\Directory\\shell\\Nomo.OpenFolder",
+        "HKCU\\Software\\Classes\\Directory\\shell\\Nomor.OpenFolder",
         &["/f"],
     );
     let _ = run_reg_delete(
-        "HKCU\\Software\\Classes\\Directory\\Background\\shell\\Nomo.OpenFolder",
+        "HKCU\\Software\\Classes\\Directory\\Background\\shell\\Nomor.OpenFolder",
         &["/f"],
     );
 
@@ -350,7 +350,7 @@ pub(crate) fn unregister_windows_context_menu<R: Runtime>(
 #[cfg(target_os = "windows")]
 fn write_prog_id(open_command: &str, icon_value: &str) -> Result<(), String> {
     run_reg_add(&[
-        "HKCU\\Software\\Classes\\Nomo.Markdown",
+        "HKCU\\Software\\Classes\\Nomor.Markdown",
         "/ve",
         "/t",
         "REG_SZ",
@@ -359,7 +359,7 @@ fn write_prog_id(open_command: &str, icon_value: &str) -> Result<(), String> {
         "/f",
     ])?;
     run_reg_add(&[
-        "HKCU\\Software\\Classes\\Nomo.Markdown",
+        "HKCU\\Software\\Classes\\Nomor.Markdown",
         "/v",
         "FriendlyTypeName",
         "/t",
@@ -369,7 +369,7 @@ fn write_prog_id(open_command: &str, icon_value: &str) -> Result<(), String> {
         "/f",
     ])?;
     run_reg_add(&[
-        "HKCU\\Software\\Classes\\Nomo.Markdown\\DefaultIcon",
+        "HKCU\\Software\\Classes\\Nomor.Markdown\\DefaultIcon",
         "/ve",
         "/t",
         "REG_SZ",
@@ -378,7 +378,7 @@ fn write_prog_id(open_command: &str, icon_value: &str) -> Result<(), String> {
         "/f",
     ])?;
     run_reg_add(&[
-        "HKCU\\Software\\Classes\\Nomo.Markdown\\shell\\open\\command",
+        "HKCU\\Software\\Classes\\Nomor.Markdown\\shell\\open\\command",
         "/ve",
         "/t",
         "REG_SZ",
@@ -463,7 +463,7 @@ fn write_default_apps_capabilities(locale: crate::i18n::InterfaceLocale) -> Resu
         "/f",
     ])?;
     run_reg_add(&[
-        "HKCU\\Software\\Nomo\\Capabilities\\FileAssociations",
+        "HKCU\\Software\\Nomor\\Capabilities\\FileAssociations",
         "/v",
         ".md",
         "/t",
@@ -473,7 +473,7 @@ fn write_default_apps_capabilities(locale: crate::i18n::InterfaceLocale) -> Resu
         "/f",
     ])?;
     run_reg_add(&[
-        "HKCU\\Software\\Nomo\\Capabilities\\FileAssociations",
+        "HKCU\\Software\\Nomor\\Capabilities\\FileAssociations",
         "/v",
         ".markdown",
         "/t",
@@ -489,7 +489,7 @@ fn write_default_apps_capabilities(locale: crate::i18n::InterfaceLocale) -> Resu
         "/t",
         "REG_SZ",
         "/d",
-        "Software\\Nomo\\Capabilities",
+        "Software\\Nomor\\Capabilities",
         "/f",
     ])
 }
@@ -593,10 +593,10 @@ fn open_windows_default_apps_settings() -> Result<(), String> {
 #[cfg(target_os = "windows")]
 fn is_nomo_registered(exe: &str) -> Result<bool, String> {
     let registered_app = query_reg_value(REGISTERED_APPLICATIONS_KEY, APP_NAME)?
-        .map(|value| value.eq_ignore_ascii_case("Software\\Nomo\\Capabilities"))
+        .map(|value| value.eq_ignore_ascii_case("Software\\Nomor\\Capabilities"))
         .unwrap_or(false);
     let prog_id_command = query_reg_value(
-        "HKCU\\Software\\Classes\\Nomo.Markdown\\shell\\open\\command",
+        "HKCU\\Software\\Classes\\Nomor.Markdown\\shell\\open\\command",
         "",
     )?
     .map(|value| {
@@ -613,10 +613,10 @@ fn is_nomo_registered(exe: &str) -> Result<bool, String> {
 fn is_windows_context_menu_registered(exe: &str) -> Result<bool, String> {
     let expected = exe.to_ascii_lowercase();
     let keys = [
-        "HKCU\\Software\\Classes\\SystemFileAssociations\\.md\\shell\\Nomo.Open\\command",
-        "HKCU\\Software\\Classes\\SystemFileAssociations\\.markdown\\shell\\Nomo.Open\\command",
-        "HKCU\\Software\\Classes\\Directory\\shell\\Nomo.OpenFolder\\command",
-        "HKCU\\Software\\Classes\\Directory\\Background\\shell\\Nomo.OpenFolder\\command",
+        "HKCU\\Software\\Classes\\SystemFileAssociations\\.md\\shell\\Nomor.Open\\command",
+        "HKCU\\Software\\Classes\\SystemFileAssociations\\.markdown\\shell\\Nomor.Open\\command",
+        "HKCU\\Software\\Classes\\Directory\\shell\\Nomor.OpenFolder\\command",
+        "HKCU\\Software\\Classes\\Directory\\Background\\shell\\Nomor.OpenFolder\\command",
     ];
 
     for key in keys {
@@ -635,7 +635,8 @@ fn is_windows_context_menu_registered(exe: &str) -> Result<bool, String> {
 #[cfg(target_os = "windows")]
 fn prog_id_matches_nomo(prog_id: &str, exe_file_name: &str) -> bool {
     let normalized = prog_id.trim().to_ascii_lowercase();
-    normalized == "nomo.markdown"
+    // 与写入时使用的 ProgId 常量比较，改名后不必再改这里。
+    normalized == NOMO_MARKDOWN_PROG_ID.to_ascii_lowercase()
         || normalized == format!("applications\\{exe_file_name}")
         || normalized == exe_file_name
 }
@@ -735,7 +736,7 @@ mod tests {
 
     #[test]
     fn matches_registered_nomo_prog_ids() {
-        assert!(prog_id_matches_nomo("Nomo.Markdown", "nomo.exe"));
+        assert!(prog_id_matches_nomo("Nomor.Markdown", "nomo.exe"));
         assert!(prog_id_matches_nomo("Applications\\nomo.exe", "nomo.exe"));
         assert!(prog_id_matches_nomo("nomo.exe", "nomo.exe"));
         assert!(!prog_id_matches_nomo("VSCode.md", "nomo.exe"));
@@ -744,13 +745,13 @@ mod tests {
     #[test]
     fn parses_reg_query_value_data() {
         let output = r#"
-HKEY_CURRENT_USER\Software\Classes\Nomo.Markdown\shell\open\command
-    (Default)    REG_SZ    "C:\Program Files\Nomo\nomo.exe" "%1"
+HKEY_CURRENT_USER\Software\Classes\Nomor.Markdown\shell\open\command
+    (Default)    REG_SZ    "C:\Program Files\Nomor\nomo.exe" "%1"
 "#;
 
         assert_eq!(
             parse_reg_query_value(output),
-            Some(r#""C:\Program Files\Nomo\nomo.exe" "%1""#.to_string())
+            Some(r#""C:\Program Files\Nomor\nomo.exe" "%1""#.to_string())
         );
     }
 }

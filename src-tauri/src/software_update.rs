@@ -9,7 +9,7 @@ use std::{
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Emitter, Manager, Runtime, WebviewWindow};
 
-const GITHUB_LATEST_RELEASE_API: &str = "https://api.github.com/repos/nomo-md/nomo/releases/latest";
+const GITHUB_LATEST_RELEASE_API: &str = "https://api.github.com/repos/whitelunatix/nomor/releases/latest";
 const GITHUB_PROXY_PREFIX: &str = "https://gh-proxy.com/";
 const UPDATE_CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
 const UPDATE_SMALL_REQUEST_TIMEOUT: Duration = Duration::from_secs(8);
@@ -938,7 +938,7 @@ fn install_software_update_inner<R: Runtime>(
 #[cfg(target_os = "windows")]
 fn is_current_windows_installer_installation() -> Result<bool, String> {
     let exe_path = std::env::current_exe()
-        .map_err(|error| format!("读取 Nomo 可执行文件路径失败：{error}"))?;
+        .map_err(|error| format!("读取 Nomor 可执行文件路径失败：{error}"))?;
     is_windows_installer_installation_for_path(&exe_path)
 }
 
@@ -1021,7 +1021,7 @@ fn is_windows_installer_installation_for_path(exe_path: &Path) -> Result<bool, S
 fn query_install_location(root: &str) -> Result<Option<String>, String> {
     query_reg_value(
         root,
-        "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Nomo",
+        "Software\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Nomor",
         "InstallLocation",
     )
 }
@@ -1382,7 +1382,7 @@ fn update_request_url(
         SoftwareUpdateSource::GitHub => Ok(original_url.to_string()),
         SoftwareUpdateSource::GhProxy => github_proxy_url(original_url).ok_or_else(|| {
             SoftwareUpdateRequestFailure::terminal(
-                "该更新地址不属于允许通过 gh-proxy 访问的 Nomo GitHub 地址。",
+                "该更新地址不属于允许通过 gh-proxy 访问的 Nomor GitHub 地址。",
             )
         }),
     }
@@ -1404,10 +1404,13 @@ fn github_proxy_url(original_url: &str) -> Option<String> {
     let allowed = (url.host_str() == Some("api.github.com")
         && matches!(
             url.path(),
-            "/repos/nomo-md/nomo/releases/latest" | "/repos/LIXianSenQwQ/nomo/releases/latest"
+            "/repos/whitelunatix/nomor/releases/latest"
+                | "/repos/nomo-md/nomo/releases/latest"
+                | "/repos/LIXianSenQwQ/nomo/releases/latest"
         ))
         || (url.host_str() == Some("github.com")
-            && (url.path().starts_with("/nomo-md/nomo/releases/download/")
+            && (url.path().starts_with("/whitelunatix/nomor/releases/download/")
+                || url.path().starts_with("/nomo-md/nomo/releases/download/")
                 || url
                     .path()
                     .starts_with("/LIXianSenQwQ/nomo/releases/download/")));
@@ -1423,7 +1426,7 @@ fn is_retryable_update_status(status: reqwest::StatusCode) -> bool {
 
 fn release_http_client() -> Result<reqwest::Client, String> {
     reqwest::Client::builder()
-        .user_agent("Nomo software updater")
+        .user_agent("Nomor software updater")
         .connect_timeout(UPDATE_CONNECT_TIMEOUT)
         .read_timeout(UPDATE_DOWNLOAD_READ_TIMEOUT)
         .build()
@@ -1710,10 +1713,10 @@ eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee  Nomo_0.1.4_x64.zip";
 
     #[test]
     fn supports_asset_names_with_spaces() {
-        let checksums = "ffffffffffffffffffffffffffffffff  Nomo Setup 0.1.4 x64.exe";
+        let checksums = "ffffffffffffffffffffffffffffffff  Nomor Setup 0.1.4 x64.exe";
 
         assert_eq!(
-            find_md5_for_file(checksums, "Nomo Setup 0.1.4 x64.exe").as_deref(),
+            find_md5_for_file(checksums, "Nomor Setup 0.1.4 x64.exe").as_deref(),
             Some("ffffffffffffffffffffffffffffffff")
         );
     }
@@ -1764,13 +1767,13 @@ eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee  Nomo_0.1.4_x64.zip";
         #[test]
         fn parses_install_location_with_spaces() {
             let output = r#"
-HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Uninstall\Nomo
-    InstallLocation    REG_SZ    "C:\Users\Qing Yu\AppData\Local\Programs\Nomo"
+HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Uninstall\Nomor
+    InstallLocation    REG_SZ    "C:\Users\Qing Yu\AppData\Local\Programs\Nomor"
 "#;
 
             assert_eq!(
                 parse_reg_value(output, "InstallLocation"),
-                Some(r#""C:\Users\Qing Yu\AppData\Local\Programs\Nomo""#.to_string())
+                Some(r#""C:\Users\Qing Yu\AppData\Local\Programs\Nomor""#.to_string())
             );
         }
     }

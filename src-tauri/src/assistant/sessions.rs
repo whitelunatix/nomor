@@ -396,7 +396,7 @@ fn render_markdown(meta: &SessionMeta, records: &[Value]) -> String {
         meta.title.as_str()
     };
     let _ = writeln!(output, "# {title}\n");
-    let _ = writeln!(output, "导出自 Nomo AI 助手。\n");
+    let _ = writeln!(output, "导出自 Nomor AI 助手。\n");
 
     for record in records {
         let Some(object) = record.as_object() else {

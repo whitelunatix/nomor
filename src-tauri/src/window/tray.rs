@@ -72,7 +72,7 @@ pub(crate) fn install_app_tray<R: Runtime>(app: &AppHandle<R>) -> Result<(), Str
     let mut builder = TrayIconBuilder::with_id(TRAY_ID)
         .menu(&menu)
         .show_menu_on_left_click(false)
-        .tooltip("Nomo")
+        .tooltip("Nomor")
         .on_menu_event(|app, event| {
             let id = event.id().as_ref();
             match id {
@@ -335,7 +335,7 @@ fn current_tray_state() -> TrayVisualState {
 fn update_tray_state(update: impl FnOnce(&mut TrayVisualState)) -> Result<TrayVisualState, String> {
     let mut state = tray_state()
         .lock()
-        .map_err(|error| format!("读取 Nomo 托盘状态失败：{error}"))?;
+        .map_err(|error| format!("读取 Nomor 托盘状态失败：{error}"))?;
     update(&mut state);
     Ok(*state)
 }
@@ -343,7 +343,7 @@ fn update_tray_state(update: impl FnOnce(&mut TrayVisualState)) -> Result<TrayVi
 fn prepare_desktop_icon_theme(next_theme: TrayTheme) -> Result<(TrayVisualState, bool), String> {
     let mut state = tray_state()
         .lock()
-        .map_err(|error| format!("读取 Nomo 托盘状态失败：{error}"))?;
+        .map_err(|error| format!("读取 Nomor 托盘状态失败：{error}"))?;
     let should_apply = stage_desktop_icon_theme(&mut state, next_theme);
     Ok((*state, should_apply))
 }
@@ -371,7 +371,7 @@ fn apply_tray_icon<R: Runtime>(app: &AppHandle<R>, state: TrayVisualState) -> Re
     };
     let icon = tray_state_icon(state)?;
     tray.set_icon(Some(icon))
-        .map_err(|error| format!("设置 Nomo 托盘图标失败：{error}"))
+        .map_err(|error| format!("设置 Nomor 托盘图标失败：{error}"))
 }
 
 #[cfg(target_os = "macos")]
@@ -380,7 +380,7 @@ fn apply_window_icons<R: Runtime>(app: &AppHandle<R>, theme: TrayTheme) -> Resul
     for (_label, window) in app.webview_windows() {
         window
             .set_icon(icon.clone())
-            .map_err(|error| format!("设置 Nomo 窗口图标失败：{error}"))?;
+            .map_err(|error| format!("设置 Nomor 窗口图标失败：{error}"))?;
     }
     apply_dock_icon(app, theme)?;
     Ok(())
@@ -397,7 +397,7 @@ fn apply_dock_icon<R: Runtime>(app: &AppHandle<R>, theme: TrayTheme) -> Result<(
             crate::app_logger::error("Tray", &error);
         }
     })
-    .map_err(|error| format!("同步 Nomo Dock 图标失败：{error}"))
+    .map_err(|error| format!("同步 Nomor Dock 图标失败：{error}"))
 }
 
 #[cfg(target_os = "macos")]
@@ -408,11 +408,11 @@ fn apply_dock_icon_on_main_thread(theme: TrayTheme) -> Result<(), String> {
 
     let bytes = window_theme_icon_bytes(theme);
     let mtm =
-        MainThreadMarker::new().ok_or_else(|| "Nomo Dock 图标必须在主线程设置".to_string())?;
+        MainThreadMarker::new().ok_or_else(|| "Nomor Dock 图标必须在主线程设置".to_string())?;
     let app = NSApplication::sharedApplication(mtm);
     let data = NSData::with_bytes(bytes);
     let icon = NSImage::initWithData(NSImage::alloc(), &data)
-        .ok_or_else(|| "读取 Nomo Dock 图标失败".to_string())?;
+        .ok_or_else(|| "读取 Nomor Dock 图标失败".to_string())?;
     unsafe { app.setApplicationIconImage(Some(&icon)) };
     Ok(())
 }
@@ -434,7 +434,7 @@ fn tray_state_icon(state: TrayVisualState) -> Result<Image<'static>, String> {
 
     Image::from_bytes(bytes)
         .map(Image::to_owned)
-        .map_err(|error| format!("读取 Nomo 托盘图标失败：{error}"))
+        .map_err(|error| format!("读取 Nomor 托盘图标失败：{error}"))
 }
 
 #[cfg(target_os = "macos")]
@@ -443,7 +443,7 @@ fn window_theme_icon(theme: TrayTheme) -> Result<Image<'static>, String> {
 
     Image::from_bytes(bytes)
         .map(Image::to_owned)
-        .map_err(|error| format!("读取 Nomo 窗口图标失败：{error}"))
+        .map_err(|error| format!("读取 Nomor 窗口图标失败：{error}"))
 }
 
 #[cfg(target_os = "macos")]

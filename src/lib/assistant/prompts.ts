@@ -15,7 +15,7 @@ export interface SystemPromptOptions {
   earlierSummary?: string | null;
 }
 
-const BASE_PROMPT = `你是 Nomo 编辑器内置的写作助手，帮助用户阅读、修改和校对 Markdown 文档。
+const BASE_PROMPT = `你是 Nomor 编辑器内置的写作助手，帮助用户阅读、修改和校对 Markdown 文档。
 
 工作方式：
 - 需要了解文档时，先调用工具获取局部内容，不要凭空猜测，也不要要求用户把全文粘贴进来。

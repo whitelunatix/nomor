@@ -622,7 +622,7 @@ export async function listUserThemeFiles(): Promise<UserThemeFile[]> {
 
 /** 弹出文件选择框并读取所选主题 JSON 原文；用户取消时返回 `null`。 */
 export async function pickUserThemeSource(): Promise<string | null> {
-  const path = await pickPathWithDialog('Nomo Theme', ['json']);
+  const path = await pickPathWithDialog('Nomor Theme', ['json']);
   if (!path) return null;
   const { invoke } = await import('@tauri-apps/api/core');
   return invoke<string>('read_user_theme_source', { path });
@@ -646,7 +646,7 @@ export async function saveUserThemeTemplateWithDialog(
   const { save } = await import('@tauri-apps/plugin-dialog');
   const path = await save({
     defaultPath: suggestedFileName,
-    filters: [{ name: 'Nomo Theme', extensions: ['json'] }],
+    filters: [{ name: 'Nomor Theme', extensions: ['json'] }],
   });
   if (!path) return false;
   const { invoke } = await import('@tauri-apps/api/core');

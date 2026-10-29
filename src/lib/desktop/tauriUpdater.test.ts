@@ -33,7 +33,7 @@ function createDownloadedUpdate(
   return {
     version: '0.1.4',
     assetName: 'Nomo_0.1.4_x64-setup.exe',
-    filePath: 'C:\\Users\\Qing Yu\\AppData\\Local\\Nomo\\updates\\Nomo_0.1.4_x64-setup.exe',
+    filePath: 'C:\\Users\\Qing Yu\\AppData\\Local\\Nomor\\updates\\Nomo_0.1.4_x64-setup.exe',
     md5: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
     downloadedBytes: 100,
     ...options,

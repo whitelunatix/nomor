@@ -143,7 +143,7 @@ describe('桌面路径编码场景（Windows-first）', () => {
 describe('installSampleDocument', () => {
   it('把后端实例文档 payload 规范化为 NativeDocument', async () => {
     invokeMock.mockResolvedValue({
-      path: 'C:\\Users\\清羽\\AppData\\Roaming\\Nomo\\samples\\sample.md',
+      path: 'C:\\Users\\清羽\\AppData\\Roaming\\Nomor\\samples\\sample.md',
       file_name: 'sample.md',
       markdown: '# 实例',
       modified_at: 100,
@@ -152,7 +152,7 @@ describe('installSampleDocument', () => {
     });
 
     await expect(installSampleDocument()).resolves.toEqual({
-      path: 'C:\\Users\\清羽\\AppData\\Roaming\\Nomo\\samples\\sample.md',
+      path: 'C:\\Users\\清羽\\AppData\\Roaming\\Nomor\\samples\\sample.md',
       fileName: 'sample.md',
       markdown: '# 实例',
       modifiedAt: 100,

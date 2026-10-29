@@ -577,7 +577,7 @@ fn create_transfer_window(app: &AppHandle, snapshot: &TransferSnapshot) -> Resul
         &snapshot.target_window_label,
         tauri::WebviewUrl::App("/".into()),
     )
-    .title("Nomo")
+    .title("Nomor")
     .inner_size(1180.0, 760.0)
     .min_inner_size(920.0, 640.0)
     .decorations(false)

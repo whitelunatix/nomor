@@ -1,7 +1,7 @@
 /**
  * `.docx.md` token 流绑定。
  *
- * 在 Nomo 恢复空行 token 之后运行：
+ * 在 Nomor 恢复空行 token 之后运行：
  * 1. 识别连续的指令行（允许中间隔着空行）；
  * 2. 尾部可附着指令写入后续内容块的 `docxPrefix`；
  * 3. 前置结构指令合并成一个 `docx_meta` token；

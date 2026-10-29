@@ -468,7 +468,7 @@ pub fn run() {
             crate::external_link::reveal_in_explorer
         ])
         .build(context)
-        .expect("error while building Nomo")
+        .expect("error while building Nomor")
         .run(|_app, _event| {
             if matches!(&_event, tauri::RunEvent::Exit) {
                 crate::window::workspace_lifecycle::committed_exit(_app);

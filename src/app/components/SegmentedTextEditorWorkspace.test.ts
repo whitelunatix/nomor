@@ -828,7 +828,7 @@ describe('SegmentedTextEditorWorkspace', () => {
 function createOpenedSession(
   encoding: OpenSegmentedDocumentResult['encoding'],
 ): OpenSegmentedDocumentResult {
-  const text = '{"name":"Nomo"}\n';
+  const text = '{"name":"Nomor"}\n';
   const byteLength = new TextEncoder().encode(text).byteLength;
   return {
     sessionId: `session-${encoding}`,

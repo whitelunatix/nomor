@@ -723,7 +723,7 @@ mod tests {
     fn reads_sample_document_from_resource_path() {
         let root = unique_test_dir("read-sample");
         let resource_path = root.join("resource.md");
-        let sample_markdown = "# Nomo Markdown 全元素实例\n\n示例内容";
+        let sample_markdown = "# Nomor Markdown 全元素实例\n\n示例内容";
         fs::create_dir_all(&root).expect("create root");
         fs::write(&resource_path, sample_markdown).expect("write resource");
 

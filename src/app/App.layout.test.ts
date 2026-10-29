@@ -494,8 +494,11 @@ describe('App outline layout', () => {
     expect(updateSource).toContain(
       'options.setPendingSourceScrollTop(options.getSplitView?.() ? null : options.getSourcePane()?.scrollTop ?? null);',
     );
-    expect(updateSource).toContain("reason: 'source-input'");
-    expect(updateSource).toContain('sourceInput: true');
+    // 源码输入先记待同步文本，稍后再写入语义区（见 applyPendingSourceMarkdown）。
+    expect(updateSource).toContain('pendingSourceMarkdown = markdown;');
+    expect(updateSource).toContain('scheduleSourceMarkdownApply();');
+    expect(editorInteractionSource).toContain("reason: 'source-input'");
+    expect(editorInteractionSource).toContain('sourceInput: true');
     expect(appSource).toContain("if (event.reason === 'source-input') {");
     expect(editorInteractionSource).toContain('getSourceScrollTopWithVisibleCaret(');
     expect(editorInteractionSource).toContain('clampPaneScrollTop(sourcePane, nextScrollTop);');
@@ -719,7 +722,7 @@ describe('App outline layout', () => {
     expect(tauriWindowsConfig.bundle.targets).toEqual(['nsis']);
     expect(tauriWindowsConfig.bundle.windows.nsis.languages).toEqual(['SimpChinese', 'English']);
     expect(tauriWindowsConfig.bundle.windows.nsis.displayLanguageSelector).toBe(true);
-    expect(tauriWindowsConfig.bundle.windows.nsis.startMenuFolder).toBe('Nomo');
+    expect(tauriWindowsConfig.bundle.windows.nsis.startMenuFolder).toBe('Nomor');
     expect(tauriWindowsConfig.bundle.windows.nsis.installerIcon).toBe('icons/icon.ico');
     expect(tauriWindowsConfig.bundle.windows.nsis.uninstallerIcon).toBe('icons/icon.ico');
     expect(tauriWindowsConfig.bundle.windows.nsis.customLanguageFiles.SimpChinese).toBe(
@@ -761,7 +764,7 @@ describe('App outline layout', () => {
     expect(tauriLibSource).not.toContain('tauri_plugin_updater');
   });
 
-  it('registers Nomo as an optional document open-with application', () => {
+  it('registers Nomor as an optional document open-with application', () => {
     expect(windowsOpenWithInstallerHookSource).toContain('NSIS_HOOK_POSTINSTALL');
     expect(windowsOpenWithInstallerHookSource).toContain(
       'Software\\Classes\\Applications\\${MAINBINARYNAME}.exe',
@@ -773,9 +776,9 @@ describe('App outline layout', () => {
     expect(windowsOpenWithInstallerHookSource).toContain('.json');
     expect(windowsOpenWithInstallerHookSource).toContain('OpenWithList');
     expect(windowsOpenWithInstallerHookSource).toContain('OpenWithProgids');
-    expect(windowsOpenWithInstallerHookSource).toContain('Nomo.Markdown');
-    expect(windowsOpenWithInstallerHookSource).toContain('Nomo.Text');
-    expect(windowsOpenWithInstallerHookSource).toContain('Nomo.Json');
+    expect(windowsOpenWithInstallerHookSource).toContain('Nomor.Markdown');
+    expect(windowsOpenWithInstallerHookSource).toContain('Nomor.Text');
+    expect(windowsOpenWithInstallerHookSource).toContain('Nomor.Json');
     expect(windowsOpenWithInstallerHookSource).not.toContain('Software\\Classes\\.md" ""');
     expect(windowsOpenWithInstallerHookSource).toContain('NSIS_HOOK_POSTUNINSTALL');
   });
@@ -1037,7 +1040,7 @@ describe('App outline layout', () => {
     expect(titleBarSource).not.toContain('nomoAppIcon');
     expect(titleBarSource).not.toContain('class="app-logo"');
     expect(titleBarSource).not.toContain('<img class="app-logo"');
-    expect(titleBarSource).toContain('Nomo</span>');
+    expect(titleBarSource).toContain('Nomor</span>');
     expect(titleBarSource).not.toContain('<span class="app-logo">M</span>');
     expect(titleBarSource).toContain('t.showExplorerSidebar()');
     expect(titleBarSource).toContain('t.hideExplorerSidebar()');
@@ -1064,8 +1067,8 @@ describe('App outline layout', () => {
     expect(windowsCaptionControlsSource).not.toContain('currentWindow.destroy()');
     expect(windowsCaptionControlsSource).toContain('width: 46px;');
     expect(windowsCaptionControlsSource).toContain('height: 100%;');
-    expect(desktopWindowSource).toContain("title: 'Nomo'");
-    expect(desktopWindowSource).toContain('} - Nomo');
+    expect(desktopWindowSource).toContain("title: 'Nomor'");
+    expect(desktopWindowSource).toContain('} - Nomor');
     expect(desktopWindowSource).toContain('getNewWindowChromeOptions');
     expect(desktopWindowSource).toContain("titleBarStyle: 'overlay'");
     expect(desktopWindowSource).toContain('trafficLightPosition: new LogicalPosition(16, 24)');
@@ -1311,8 +1314,8 @@ describe('App outline layout', () => {
     expect(settingsWindowSource).toContain('softwareUpdateUnsupportedMacos');
     expect(settingsWindowSource).toContain('HOMEBREW_SETUP_COMMAND');
     expect(releaseWorkflowSource).toContain('update-homebrew-cask');
-    expect(releaseWorkflowSource).toContain('Casks/nomo.rb');
-    expect(existsSync(resolve(__dirname, '../../Casks/nomo.rb'))).toBe(true);
+    expect(releaseWorkflowSource).toContain('Casks/nomor.rb');
+    expect(existsSync(resolve(__dirname, '../../Casks/nomor.rb'))).toBe(true);
     expect(
       readFileSync(resolve(__dirname, 'components/ContextMenu.svelte'), 'utf-8'),
     ).toContain('formatShortcutLabel');

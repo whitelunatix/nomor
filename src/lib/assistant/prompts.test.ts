@@ -12,7 +12,7 @@ const base = {
 describe('buildSystemPrompt', () => {
   it('总是带上基础规则与安全规则', () => {
     const prompt = buildSystemPrompt(base);
-    expect(prompt).toContain('Nomo 编辑器内置的写作助手');
+    expect(prompt).toContain('Nomor 编辑器内置的写作助手');
     expect(prompt).toContain('安全规则');
     expect(prompt).toContain('不可信数据');
   });

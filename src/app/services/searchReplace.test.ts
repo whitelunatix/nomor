@@ -3,20 +3,20 @@ import { findTextMatches, replaceAllTextMatches, replaceTextRange } from './sear
 
 describe('searchReplace', () => {
   it('finds literal matches without case sensitivity by default', () => {
-    const matches = findTextMatches('Nomo nomo NOMO', 'nomo', { caseSensitive: false });
+    const matches = findTextMatches('Alpha alpha ALPHA', 'alpha', { caseSensitive: false });
 
     expect(matches.map((match) => [match.from, match.to, match.text])).toEqual([
-      [0, 4, 'Nomo'],
-      [5, 9, 'nomo'],
-      [10, 14, 'NOMO'],
+      [0, 5, 'Alpha'],
+      [6, 11, 'alpha'],
+      [12, 17, 'ALPHA'],
     ]);
   });
 
   it('respects case sensitive matching', () => {
-    const matches = findTextMatches('Nomo nomo NOMO', 'nomo', { caseSensitive: true });
+    const matches = findTextMatches('Alpha alpha ALPHA', 'alpha', { caseSensitive: true });
 
     expect(matches).toHaveLength(1);
-    expect(matches[0]?.from).toBe(5);
+    expect(matches[0]?.from).toBe(6);
   });
 
   it('replaces one selected match', () => {

@@ -2576,7 +2576,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "nomo"
+name = "nomor"
 version = "0.6.2"
 dependencies = [
  "arboard",

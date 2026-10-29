@@ -412,7 +412,7 @@ pub(crate) async fn create_pdf_export_window(
     let ready_tx = Arc::new(StdMutex::new(Some(ready_tx)));
 
     let window = WebviewWindowBuilder::new(app, label, WebviewUrl::External(file_url))
-        .title("Nomo PDF Export")
+        .title("Nomor PDF Export")
         .inner_size(1000.0, 1200.0)
         .decorations(false)
         .focused(false)

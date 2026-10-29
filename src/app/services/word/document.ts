@@ -224,7 +224,7 @@ export async function buildWordDocument(input: WordDocument): Promise<ArrayBuffe
     // 当前 schema 的脚注包含段落；表格扩展仍保留文字，避免无效 footnote XML。
     footnotes[String(footnoteIds.get(id)!)] = { children: content.flatMap((block) => block instanceof Paragraph ? [block] : [new Paragraph(plain(node))]) };
   }
-  const doc = new Document({ title: input.title, creator: 'Nomo',
+  const doc = new Document({ title: input.title, creator: 'Nomor',
     styles: { default: { document: { run: { font: FONT, size: 22, color: '202124' }, paragraph: { spacing: { after: 120, line: 360 } } } },
       paragraphStyles: [20, 16, 14, 12, 11, 11].map((size, index) => ({ id: `Heading${index + 1}`, name: `Heading ${index + 1}`,
         basedOn: 'Normal', next: 'Normal', quickFormat: true, run: { font: FONT, size: size * 2, bold: true, color: '202124' },

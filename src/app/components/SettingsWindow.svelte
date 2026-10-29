@@ -115,8 +115,8 @@
   import nomoLogoDark from '../../../src-tauri/icons/nomo/source/nomo-app-dark.svg?url';
   import nomoLogoLight from '../../../src-tauri/icons/nomo/source/nomo-app-light.svg?url';
 
-  const GITHUB_REPOSITORY_URL = 'https://github.com/nomo-md/nomo';
-  const GITHUB_ISSUE_URL = 'https://github.com/nomo-md/nomo/issues/new/choose';
+  const GITHUB_REPOSITORY_URL = 'https://github.com/whitelunatix/nomor';
+  const GITHUB_ISSUE_URL = 'https://github.com/whitelunatix/nomor/issues/new/choose';
 
   type CategoryId =
     | 'general'
@@ -3034,7 +3034,7 @@
                   <img class="logo-dark" src={nomoLogoDark} alt="" draggable="false" />
                 </div>
                 <div class="about-identity-copy">
-                  <h2>Nomo</h2>
+                  <h2>Nomor</h2>
                   <span
                     class="about-version-badge"
                     aria-label={`${t.version()} ${packageInfo.version}`}

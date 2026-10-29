@@ -75,13 +75,13 @@ function getTopLevelNodeNames(doc: ProseMirrorNode): string[] {
 
 describe('createEditorCore', () => {
   it('keeps Markdown as the observable editor state', () => {
-    const editor = createEditorCore({ markdown: '# Nomo' });
+    const editor = createEditorCore({ markdown: '# Nomor' });
 
-    editor.setMarkdown('# Nomo\n\n阶段0');
+    editor.setMarkdown('# Nomor\n\n阶段0');
 
-    expect(editor.getMarkdown()).toBe('# Nomo\n\n阶段0');
+    expect(editor.getMarkdown()).toBe('# Nomor\n\n阶段0');
     expect(editor.getSnapshot()).toMatchObject({
-      markdown: '# Nomo\n\n阶段0',
+      markdown: '# Nomor\n\n阶段0',
       version: 1,
     });
   });

@@ -1,5 +1,5 @@
 [package]
-name = "nomo"
+name = "nomor"
 version = "0.6.2"
 description = "A lightweight Markdown-first editor"
 authors = ["清羽"]
@@ -7,7 +7,7 @@ license = "AGPL-3.0-or-later"
 edition = "2021"
 
 [lib]
-name = "nomo_lib"
+name = "nomor_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

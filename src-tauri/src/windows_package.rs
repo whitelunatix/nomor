@@ -273,13 +273,13 @@ mod tests {
         let identity = package_identity().unwrap();
         assert_eq!(identity.state, "partnerCenter");
         assert_eq!(identity.name, "7D729C8F.NomoMarkdown");
-        assert_eq!(identity.display_name, "Nomo Markdown");
+        assert_eq!(identity.display_name, "Nomor Markdown");
         assert_eq!(
             identity.publisher,
             "CN=B28DFEE9-0867-4248-BB11-F280549EFAB0"
         );
         assert_eq!(identity.publisher_display_name, "清羽晚安");
-        assert_eq!(identity.application_id, "Nomo");
+        assert_eq!(identity.application_id, "Nomor");
         assert_eq!(
             identity.package_family_name.as_deref(),
             Some("7D729C8F.NomoMarkdown_zq15d798m6gb8")

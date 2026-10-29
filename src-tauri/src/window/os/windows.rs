@@ -76,7 +76,7 @@ fn disable_browser_shortcuts(
             .SetAreBrowserAcceleratorKeysEnabled(false)?;
 
         // Tauri 在创建 WebView 时已发起首次导航，全局设置可能到下次导航才生效。
-        // 逐次关闭浏览器处理立即生效；不设置 Handled，让 Nomo 和编辑器继续收到按键。
+        // 逐次关闭浏览器处理立即生效；不设置 Handled，让 Nomor 和编辑器继续收到按键。
         let handler = AcceleratorKeyPressedEventHandler::create(Box::new(move |_, args| {
             let Some(args) = args else {
                 return Ok(());
@@ -199,7 +199,7 @@ fn wide_null(value: &str) -> Vec<u16> {
 /// 使用 Win32 API 强制窗口到前台。
 ///
 /// Windows 有前台窗口激活限制：非前台进程不能随意将自己的窗口设为前台。
-/// 当通过单实例插件接收外部打开请求时，Nomo 进程可能不是当前前台进程，
+/// 当通过单实例插件接收外部打开请求时，Nomor 进程可能不是当前前台进程，
 /// 仅靠 Tauri 的 `set_focus()` 无法可靠激活窗口。
 /// 本函数通过临时置顶（TOPMOST）技巧配合 `SetForegroundWindow` 来绕过限制。
 pub(crate) fn bring_window_to_front<R: tauri::Runtime>(window: &tauri::WebviewWindow<R>) {

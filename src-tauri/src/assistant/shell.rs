@@ -274,7 +274,7 @@ async fn run(
     });
 
     // 超时或取消时杀死整棵进程树；Windows 再套一层 Job Object，
-    // 保证 Nomo 退出时不会留下后台子进程。
+    // 保证 Nomor 退出时不会留下后台子进程。
     wrap.wrap(KillOnDrop);
     #[cfg(windows)]
     {

@@ -1,12 +1,12 @@
 <p align="center">
-  <img src="./src-tauri/icons/128x128.png" alt="Nomo icon" width="60">
+  <img src="./src-tauri/icons/128x128.png" alt="Nomor icon" width="60">
 </p>
 
-<h1 align="center">Nomo</h1>
+<h1 align="center">Nomor</h1>
 
 <p align="center">
-  <a href="https://github.com/nomo-md/nomo/releases/latest">
-    <img src="https://img.shields.io/github/v/release/nomo-md/nomo?label=release" alt="GitHub Release">
+  <a href="https://github.com/whitelunatix/nomor/releases/latest">
+    <img src="https://img.shields.io/github/v/release/whitelunatix/nomor?label=release" alt="GitHub Release">
   </a>
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Windows-lightgrey" alt="Available for macOS and Windows">
   <a href="./LICENSE">
@@ -25,58 +25,55 @@
 </p>
 
 <p align="center">
-  <img src="./assets/nomo-editor-en.gif" alt="Nomo writing demo in English" width="800">
+  <img src="./assets/nomo-editor-en.gif" alt="Nomor editor demo" width="800">
 </p>
 
-## Download and Install
+> **About this project**: Nomor is a derivative of [Nomo](https://github.com/nomo-md/nomo) by LIXianSenQwQ, released under the same AGPL-3.0-or-later license. It adds `.docx.md` Word document editing and export, line numbers for the source and rendered panes, and other features; all source is published as required by the AGPL.
 
-Get the latest version from [GitHub Releases](https://github.com/nomo-md/nomo/releases/latest).
+## Download
 
-| Platform | Requirements | Installation |
+Get the latest version from [GitHub Releases](https://github.com/whitelunatix/nomor/releases/latest).
+
+| OS | Requirement | Installer |
 | :--- | :--- | :--- |
-| Windows | Windows 10 / 11, x64 | `.exe` installer / `.zip` portable |
-| macOS | macOS 12.0+, Apple Silicon | `.dmg` / Homebrew |
+| Windows | Windows 10 / 11, x64 | `.exe` installer / portable `.zip` |
+| macOS | macOS 12.0+, Apple Silicon | `.dmg` |
 
-On macOS, you can also install with Homebrew:
+This derivative does not publish a Homebrew cask yet; use the installers from the release page.
 
-```bash
-brew tap nomo-md/nomo https://github.com/nomo-md/nomo
-brew install --cask nomo
-```
-
-Upgrade with `brew upgrade --cask nomo`.
-
-SmartScreen or Gatekeeper may prompt on first launch; download from this project's Releases.
+SmartScreen / Gatekeeper may warn on first launch; make sure you downloaded from this project's Releases.
 
 ## Features
 
-- **Markdown editing**: Live preview, source and split modes, with `/` for quick insertion.
-- **Rich content**: Tables, syntax highlighting, math formulas and Mermaid diagrams.
-- **File management**: Type to locate files in the explorer, work in multiple tabs and edit large TXT / JSON files in segments.
-- **Save and restore**: Optional autosave and local Markdown snapshots, plus workspace and reading position restoration.
-- **Comfortable writing**: Light and dark themes, [custom color themes and fonts](docs/custom-themes.md) (guide in Chinese), optional fine typography and an always-on-top Markdown mini window.
-- **Export and preview**: Export HTML / PDF / Word (.docx), with editable Word text and tables, formulas and diagrams as images, and Quick Look previews on macOS.
+- **Markdown editing**: live preview, source and split modes, `/` quick insert.
+- **Word documents**: edit `.docx.md` files with Word directive lines for fonts, paragraphs, page breaks and page setup, then export an editable `.docx`.
+- **Rich content**: tables, syntax highlighting, math and Mermaid diagrams.
+- **File management**: type-to-find file tree, multiple tabs, segmented editing for large TXT / JSON files.
+- **Save and restore**: optional autosave and local Markdown snapshots, restore workspace and reading position.
+- **Comfortable writing**: light and dark themes, [custom color themes and fonts](docs/custom-themes.md), optional fine typography, and a pinnable Markdown mini window.
+- **Export and preview**: export to HTML / PDF / Word; Word body text and tables stay editable, math and diagrams become images; Quick Look on macOS.
+- **Line numbers**: turn on source and rendered line numbers separately in settings; both panes share the same "effective line" numbering.
 
-See [release notes](https://github.com/nomo-md/nomo/releases) for version changes.
+See [release notes](https://github.com/whitelunatix/nomor/releases) for version changes.
 
 ## Development
 
 Built with Tauri 2 + Svelte 5. Requires Node.js 22, pnpm 11.5.1 and Rust / Cargo.
 
-- Windows: Visual Studio 2022 Build Tools or the full Visual Studio.
-- macOS: Xcode Command Line Tools; building the Quick Look extension requires the full Xcode.
+- Windows: Visual Studio 2022 Build Tools or a full Visual Studio install.
+- macOS: Xcode Command Line Tools; the Quick Look extension needs a full Xcode install.
 
 ```bash
 pnpm install
 pnpm tauri dev
 ```
 
-## Get Involved
+## Contributing
 
-[Issues](https://github.com/nomo-md/nomo/issues) and [pull requests](https://github.com/nomo-md/nomo/pulls) are welcome; include your OS version, steps to reproduce and a sample when reporting a bug.
+[Issues](https://github.com/whitelunatix/nomor/issues) and [pull requests](https://github.com/whitelunatix/nomor/pulls) are welcome; include your OS version, steps to reproduce and a sample when reporting a bug.
 
-Enjoy Nomo? [Star the project](https://github.com/nomo-md/nomo) or follow [LIXianSenQwQ](https://github.com/LIXianSenQwQ). Community: [linux.do](https://linux.do/).
+Enjoy Nomor? [Star the project](https://github.com/whitelunatix/nomor). Upstream [Nomo](https://github.com/nomo-md/nomo) is developed by [LIXianSenQwQ](https://github.com/LIXianSenQwQ).
 
-Licensed under [AGPL-3.0-or-later](./LICENSE); contact the maintainers for separate commercial licensing. Third-party components retain their own licenses.
+Licensed under [AGPL-3.0-or-later](./LICENSE); third-party components keep their own licenses.
 
 Thanks to Tauri, Svelte, ProseMirror, CodeMirror, markdown-it, Shiki, KaTeX, Mermaid and other open-source projects.
