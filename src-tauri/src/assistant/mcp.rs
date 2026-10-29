@@ -559,7 +559,7 @@ fn merge_import(
 fn client_config() -> ClientConfig {
     ClientConfig::new(
         ClientCapabilities::default(),
-        Implementation::new("nomo", env!("CARGO_PKG_VERSION")),
+        Implementation::new("nomor", env!("CARGO_PKG_VERSION")),
     )
 }
 
