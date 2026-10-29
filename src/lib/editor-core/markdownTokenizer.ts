@@ -3,7 +3,7 @@ import Token from 'markdown-it/lib/token.mjs';
 import { unescapeAll } from 'markdown-it/lib/common/utils.mjs';
 import { normalizeLinkHref } from './link';
 import { registerBareLinkRule } from './bareLinks';
-import { transformCalloutTokens } from './callout/calloutParser';
+import { stripCalloutMarkerFromSource, transformCalloutTokens } from './callout/calloutParser';
 import { registerDetailsRule } from './details/detailsSyntax';
 import { maskInlineMarkerPipes, restoreInlineMarkerPipesInTokens } from '../docxmd/inlineMarkers';
 
@@ -527,8 +527,9 @@ export function createMarkdownTokenizer(options: MarkdownTokenizerOptions = {}):
     if (calloutSources) {
       for (const token of result) {
         const original = calloutSources.get(token);
-        if (original == null || original === token.content || !/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/.test(original)) continue;
-        token.content = original.replace(/^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\](?:\r?\n)?/, '');
+        // 只有被 callout 改写过的 inline 才需要按原始源码重新分词。
+        if (original == null || original === token.content) continue;
+        token.content = stripCalloutMarkerFromSource(original);
         token.children = [];
         markdownIt.inline.parse(token.content, markdownIt, env, token.children);
       }

@@ -348,6 +348,47 @@
 .nomo-export .callout-card[data-callout-type='caution']::before {
   background: var(--md-editor-callout-caution-border);
 }
+/* 扩展类型沿用最接近的语义配色，避免为“信息/成功/问题/危险”再维护一套主题变量。 */
+.prosemirror-host .ProseMirror .callout-card[data-callout-type='info'],
+.nomo-export .callout-card[data-callout-type='info'] {
+  border-color: var(--md-editor-callout-note-border);
+  background: var(--md-editor-callout-note-bg);
+  color: var(--md-editor-callout-note-fg);
+}
+.prosemirror-host .ProseMirror .callout-card[data-callout-type='info']::before,
+.nomo-export .callout-card[data-callout-type='info']::before {
+  background: var(--md-editor-callout-note-border);
+}
+.prosemirror-host .ProseMirror .callout-card[data-callout-type='success'],
+.nomo-export .callout-card[data-callout-type='success'] {
+  border-color: var(--md-editor-callout-tip-border);
+  background: var(--md-editor-callout-tip-bg);
+  color: var(--md-editor-callout-tip-fg);
+}
+.prosemirror-host .ProseMirror .callout-card[data-callout-type='success']::before,
+.nomo-export .callout-card[data-callout-type='success']::before {
+  background: var(--md-editor-callout-tip-border);
+}
+.prosemirror-host .ProseMirror .callout-card[data-callout-type='question'],
+.nomo-export .callout-card[data-callout-type='question'] {
+  border-color: var(--md-editor-callout-important-border);
+  background: var(--md-editor-callout-important-bg);
+  color: var(--md-editor-callout-important-fg);
+}
+.prosemirror-host .ProseMirror .callout-card[data-callout-type='question']::before,
+.nomo-export .callout-card[data-callout-type='question']::before {
+  background: var(--md-editor-callout-important-border);
+}
+.prosemirror-host .ProseMirror .callout-card[data-callout-type='danger'],
+.nomo-export .callout-card[data-callout-type='danger'] {
+  border-color: var(--md-editor-callout-caution-border);
+  background: var(--md-editor-callout-caution-bg);
+  color: var(--md-editor-callout-caution-fg);
+}
+.prosemirror-host .ProseMirror .callout-card[data-callout-type='danger']::before,
+.nomo-export .callout-card[data-callout-type='danger']::before {
+  background: var(--md-editor-callout-caution-border);
+}
 [data-block-style='classic']
   .prosemirror-host
   .ProseMirror
@@ -393,6 +434,46 @@
   border-left-color: var(--md-editor-callout-caution-border);
   background: var(--md-editor-callout-caution-bg-classic);
 }
+[data-block-style='classic']
+  .prosemirror-host
+  .ProseMirror
+  .callout-card[data-callout-type='info'],
+[data-block-style='classic']
+  .nomo-export
+  .callout-card[data-callout-type='info'] {
+  border-left-color: var(--md-editor-callout-note-border);
+  background: var(--md-editor-callout-note-bg-classic);
+}
+[data-block-style='classic']
+  .prosemirror-host
+  .ProseMirror
+  .callout-card[data-callout-type='success'],
+[data-block-style='classic']
+  .nomo-export
+  .callout-card[data-callout-type='success'] {
+  border-left-color: var(--md-editor-callout-tip-border);
+  background: var(--md-editor-callout-tip-bg-classic);
+}
+[data-block-style='classic']
+  .prosemirror-host
+  .ProseMirror
+  .callout-card[data-callout-type='question'],
+[data-block-style='classic']
+  .nomo-export
+  .callout-card[data-callout-type='question'] {
+  border-left-color: var(--md-editor-callout-important-border);
+  background: var(--md-editor-callout-important-bg-classic);
+}
+[data-block-style='classic']
+  .prosemirror-host
+  .ProseMirror
+  .callout-card[data-callout-type='danger'],
+[data-block-style='classic']
+  .nomo-export
+  .callout-card[data-callout-type='danger'] {
+  border-left-color: var(--md-editor-callout-caution-border);
+  background: var(--md-editor-callout-caution-bg-classic);
+}
 .callout-header {
   position: relative;
   display: flex;
@@ -422,6 +503,38 @@
 }
 .callout-body > :last-child {
   margin-bottom: 0;
+}
+details.callout-card > summary.callout-header {
+  cursor: pointer;
+  list-style: none;
+}
+details.callout-card > summary.callout-header::-webkit-details-marker {
+  display: none;
+}
+.callout-card[data-callout-fold='closed'] .callout-body {
+  display: none;
+}
+.callout-fold-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-left: 2px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--md-editor-radius-xs);
+  background: transparent;
+  color: inherit;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.72;
+}
+.callout-fold-btn:hover {
+  opacity: 1;
+  background: color-mix(in srgb, currentColor 12%, transparent);
 }
 .prosemirror-host .ProseMirror code,
 .nomo-export code {

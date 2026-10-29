@@ -7,6 +7,7 @@ import {
   CALLOUT_TYPES,
   getCalloutConfig,
   getCalloutLabel,
+  getCalloutTitle,
   type CalloutType,
 } from '../callout/calloutTypes';
 
@@ -34,6 +35,7 @@ export class CalloutNodeView implements NodeView {
   // header 元素引用
   private iconEl: HTMLElement;
   private titleEl: HTMLElement;
+  private foldBtn: HTMLButtonElement;
   private typeBtn: HTMLButtonElement;
 
   // 类型选择面板
@@ -67,8 +69,19 @@ export class CalloutNodeView implements NodeView {
     // 标题
     this.titleEl = document.createElement('span');
     this.titleEl.className = 'callout-title';
-    this.titleEl.textContent = getCalloutLabel(config.type);
+    this.titleEl.textContent = getCalloutTitle(config.type, node.attrs.title);
     header.appendChild(this.titleEl);
+
+    // 折叠按钮：只有 `[!TYPE]+` / `[!TYPE]-` 才显示
+    this.foldBtn = document.createElement('button');
+    this.foldBtn.type = 'button';
+    this.foldBtn.className = 'callout-fold-btn';
+    this.foldBtn.addEventListener('mousedown', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      this.toggleFold();
+    });
+    header.appendChild(this.foldBtn);
 
     // 类型切换按钮
     this.typeBtn = document.createElement('button');
@@ -95,6 +108,7 @@ export class CalloutNodeView implements NodeView {
 
     this.picker = this.createPicker(config.type);
     this.dom.appendChild(this.picker);
+    this.applyFoldState(node.attrs.fold as string | null);
     window.addEventListener(INTERFACE_LOCALE_CHANGED_EVENT, this.refreshLocaleLabels);
   }
 
@@ -107,8 +121,9 @@ export class CalloutNodeView implements NodeView {
 
     this.dom.setAttribute('data-callout-type', config.type);
     this.iconEl.innerHTML = getIconSvg(config.icon);
-    this.titleEl.textContent = getCalloutLabel(config.type);
+    this.titleEl.textContent = getCalloutTitle(config.type, node.attrs.title);
     this.updatePickerActiveType(config.type);
+    this.applyFoldState(node.attrs.fold as string | null);
 
     return true;
   }
@@ -144,6 +159,28 @@ export class CalloutNodeView implements NodeView {
   destroy(): void {
     this.hidePicker();
     window.removeEventListener(INTERFACE_LOCALE_CHANGED_EVENT, this.refreshLocaleLabels);
+  }
+
+  // ---- 折叠 ----
+
+  private toggleFold(): void {
+    if (!this.view.editable) return;
+    const next = this.dom.dataset.calloutFold === 'closed' ? 'open' : 'closed';
+    const pos = this.getPos();
+    const tr = this.view.state.tr.setNodeMarkup(pos, undefined, { ...this.node.attrs, fold: next });
+    this.view.dispatch(tr);
+  }
+
+  private applyFoldState(fold: string | null): void {
+    const normalized = fold === 'open' || fold === 'closed' ? fold : null;
+    if (normalized) this.dom.dataset.calloutFold = normalized;
+    else delete this.dom.dataset.calloutFold;
+    this.dom.classList.toggle('is-folded', normalized === 'closed');
+    this.foldBtn.hidden = normalized === null;
+    this.foldBtn.textContent = normalized === 'closed' ? '▸' : '▾';
+    this.foldBtn.setAttribute('aria-expanded', normalized === 'closed' ? 'false' : 'true');
+    this.foldBtn.setAttribute('aria-label', normalized === 'closed' ? '展开提示块' : '折叠提示块');
+    this.foldBtn.title = this.foldBtn.getAttribute('aria-label') ?? '';
   }
 
   // ---- 类型切换面板 ----
@@ -237,7 +274,7 @@ export class CalloutNodeView implements NodeView {
 
   private updateLocalizedLabels(): void {
     const type = getCalloutConfig(this.node.attrs.type as string).type;
-    this.titleEl.textContent = getCalloutLabel(type);
+    this.titleEl.textContent = getCalloutTitle(type, this.node.attrs.title);
     this.typeBtn.setAttribute('aria-label', getCalloutLabel(type));
     this.typeBtn.title = getCalloutLabel(type);
     for (const item of this.picker.querySelectorAll<HTMLElement>('.callout-type-picker-item')) {
@@ -255,7 +292,8 @@ export class CalloutNodeView implements NodeView {
     if (newType === currentType) return;
 
     const pos = this.getPos();
-    const tr = this.view.state.tr.setNodeMarkup(pos, undefined, { type: newType });
+    // 只换类型，保留自定义标题与折叠状态。
+    const tr = this.view.state.tr.setNodeMarkup(pos, undefined, { ...this.node.attrs, type: newType });
     this.view.dispatch(tr.scrollIntoView());
   }
 }

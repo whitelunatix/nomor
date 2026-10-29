@@ -3,11 +3,21 @@
 import Token from 'markdown-it/lib/token.mjs';
 import type { CalloutType } from './calloutTypes';
 
-// 匹配行首 [!TYPE] 标记，后面可以跟换行或其他内容
-const CALLOUT_MARKER_RE = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/;
+// 行首标记：类型、可选折叠记号（+/-）以及可选的自定义标题。
+const CALLOUT_MARKER_RE = /^\[!([A-Za-z][A-Za-z0-9_-]*)\]([+-])?(?:[ \t]+([^\r\n]*))?/;
 
 /** 支持的 callout 类型集合（小写） */
-const VALID_TYPES = new Set(['note', 'tip', 'important', 'warning', 'caution']);
+const VALID_TYPES = new Set([
+  'note',
+  'tip',
+  'important',
+  'warning',
+  'caution',
+  'info',
+  'success',
+  'question',
+  'danger',
+]);
 
 /**
  * 在 markdown-it 的 token 流中检测 blockquote 内的 [!TYPE] 标记，
@@ -66,33 +76,39 @@ export function transformCalloutTokens(tokens: Token[]): void {
       continue;
     }
 
-    const calloutType = match[1].toLowerCase() as CalloutType;
+    const calloutType = match[1]!.toLowerCase() as CalloutType;
     if (!VALID_TYPES.has(calloutType)) {
       i++;
       continue;
     }
 
+    const fold = match[2] === '+' ? 'open' : match[2] === '-' ? 'closed' : null;
+    // 标记与标题之间必须有空白；`[!NOTE]正文` 仍按同一行的正文处理。
+    const title = (match[3] ?? '').trim() || null;
+
     // --- 匹配成功，开始改写 tokens ---
 
-    // 1. 将 blockquote_open 改为 callout_open，保存 type
+    // 1. 将 blockquote_open 改为 callout_open，保存 type / 标题 / 折叠状态
     tok.type = 'callout_open';
     tok.tag = 'div';
     tok.nesting = 1;
-    tok.meta = { calloutType };
+    tok.meta = { calloutType, calloutTitle: title, calloutFold: fold };
     tok.attrSet('class', 'callout-card');
     tok.attrSet('data-callout-type', calloutType);
+    if (title) tok.attrSet('data-callout-title', title);
+    if (fold) tok.attrSet('data-callout-fold', fold);
 
     // 2. 将 blockquote_close 改为 callout_close
     const closeTok = tokens[closeIdx];
     closeTok.type = 'callout_close';
     closeTok.tag = 'div';
     closeTok.nesting = -1;
-    closeTok.meta = { calloutType };
+    closeTok.meta = { calloutType, calloutTitle: title, calloutFold: fold };
 
     // 3. 从 inline token 中剥离 [!TYPE] 标记行
     //    markdown-it 会把 blockquote 内多行内容合并到一个 inline token
     //    content 形如 "[!NOTE]\n这是内容"，children 形如 [text("[!NOTE]"), softbreak, text("这是内容")]
-    stripCalloutMarker(inlineTok);
+    stripCalloutMarker(inlineTok, title !== null);
 
     // 如果剥离后 inline 内容为空，且是唯一段落，则移除整个段落 token 组
     if (inlineTok.content.trim() === '' && inlineTok.children?.length === 0) {
@@ -119,16 +135,46 @@ export function transformCalloutTokens(tokens: Token[]): void {
 }
 
 /**
- * 从 inline token 中剥离 [!TYPE] 标记行。
- * 处理两种情况：
- * 1. 整行只有 [!TYPE]：清空 children 和 content
- * 2. [!TYPE] 后面有其他内容：移除 [!TYPE] 文本节点和紧跟的 softbreak
+ * 从原始 inline 源码中剥离 callout 标记，供 inlineSource 模式重新分词。
+ * 语义与 stripCalloutMarker 保持一致：有自定义标题时整行移除，否则只移除标记前缀。
  */
-function stripCalloutMarker(inlineTok: Token): void {
-  const markerPattern = /^\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/;
+export function stripCalloutMarkerFromSource(source: string): string {
+  const match = source.match(CALLOUT_MARKER_RE);
+  if (!match) return source;
+  if ((match[3] ?? '').trim()) {
+    const lineEnd = source.indexOf('\n', match[0].length);
+    return lineEnd === -1 ? '' : source.slice(lineEnd + 1);
+  }
+  const marker = /^\[![A-Za-z][A-Za-z0-9_-]*\][+-]?/.exec(source);
+  if (!marker) return source;
+  const rest = source.slice(marker[0].length);
+  // 标记独占一行时连同换行一起移除，避免正文开头多出空行。
+  return /^[ \t]*(?:\r?\n|$)/.test(rest) ? rest.replace(/^[ \t]*(?:\r?\n)?/, '') : rest;
+}
+
+/**
+ * 从 inline token 中剥离 [!TYPE][+/-] 标记行。
+ * 处理三种情况：
+ * 1. 带自定义标题：标题已存入节点属性，整行连同 softbreak 一起移除
+ * 2. 整行只有标记：清空 children 和 content
+ * 3. 标记后紧跟正文：只剥离标记前缀
+ */
+function stripCalloutMarker(inlineTok: Token, dropWholeLine: boolean): void {
+  const markerPattern = /^\[![A-Za-z][A-Za-z0-9_-]*\][+-]?/;
 
   // 从 children 中查找并移除 [!TYPE] 标记
   const children = inlineTok.children ?? [];
+
+  if (dropWholeLine) {
+    const breakIndex = children.findIndex((child) => child.type === 'softbreak');
+    const remaining = children.slice(breakIndex === -1 ? children.length : breakIndex + 1);
+    inlineTok.children = remaining;
+    inlineTok.content = remaining
+      .map((child) => child.content ?? (child.type === 'softbreak' ? '\n' : ''))
+      .join('');
+    return;
+  }
+
   let markerIdx = -1;
 
   for (let j = 0; j < children.length; j++) {
@@ -171,6 +217,10 @@ function stripCalloutMarker(inlineTok: Token): void {
 export const calloutParserTokens = {
   callout: {
     block: 'callout',
-    getAttrs: (tok: Token) => ({ type: tok.meta?.calloutType ?? 'note' }),
+    getAttrs: (tok: Token) => ({
+      type: tok.meta?.calloutType ?? 'note',
+      title: tok.meta?.calloutTitle ?? null,
+      fold: tok.meta?.calloutFold ?? null,
+    }),
   },
 };

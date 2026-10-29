@@ -1,7 +1,20 @@
 /** Callout（提示块）类型定义 */
 
-/** 5 种固定 callout 类型 */
-export type CalloutType = 'note' | 'tip' | 'important' | 'warning' | 'caution';
+/**
+ * callout 类型。
+ * 前 5 种与 GitHub Alert 兼容；后 4 种是 Nomor 的扩展类型，
+ * 仍然使用 `> [!TYPE]` 语法，导出时按类型着色。
+ */
+export type CalloutType =
+  | 'note'
+  | 'tip'
+  | 'important'
+  | 'warning'
+  | 'caution'
+  | 'info'
+  | 'success'
+  | 'question'
+  | 'danger';
 
 export type EffectiveCalloutLocale = 'zh-CN' | 'zh-TW' | 'en-US';
 
@@ -13,13 +26,17 @@ export interface CalloutTypeConfig {
   colorSuffix: string; // CSS 变量后缀，如 --md-editor-callout-note-border
 }
 
-/** 5 种类型的静态配置表 */
+/** 类型配置表 */
 export const CALLOUT_TYPES: CalloutTypeConfig[] = [
   { type: 'note',      icon: 'Info',           label: 'Note', colorSuffix: 'note' },
   { type: 'tip',       icon: 'Lightbulb',      label: 'Tip', colorSuffix: 'tip' },
   { type: 'important', icon: 'Star',           label: 'Important', colorSuffix: 'important' },
   { type: 'warning',   icon: 'AlertTriangle',  label: 'Warning', colorSuffix: 'warning' },
   { type: 'caution',   icon: 'OctagonAlert',   label: 'Caution', colorSuffix: 'caution' },
+  { type: 'info',      icon: 'Info',           label: 'Info', colorSuffix: 'note' },
+  { type: 'success',   icon: 'CircleCheck',    label: 'Success', colorSuffix: 'tip' },
+  { type: 'question',  icon: 'CircleHelp',     label: 'Question', colorSuffix: 'important' },
+  { type: 'danger',    icon: 'Flame',          label: 'Danger', colorSuffix: 'caution' },
 ];
 
 /** 根据 type 字符串查找配置 */
@@ -33,6 +50,16 @@ export function getCalloutLabel(
 ): string {
   const normalizedType = getCalloutConfig(type).type;
   return CALLOUT_LABELS[locale][normalizedType];
+}
+
+/** 自定义标题优先；为空时使用本地化的类型默认标题。 */
+export function getCalloutTitle(
+  type: string,
+  title: unknown,
+  locale: EffectiveCalloutLocale = getCurrentCalloutLocale(),
+): string {
+  const custom = String(title ?? '').trim();
+  return custom || getCalloutLabel(type, locale);
 }
 
 function getCurrentCalloutLocale(): EffectiveCalloutLocale {
@@ -49,6 +76,10 @@ const CALLOUT_LABELS: Record<EffectiveCalloutLocale, Record<CalloutType, string>
     important: '重要',
     warning: '警告',
     caution: '风险',
+    info: '信息',
+    success: '成功',
+    question: '问题',
+    danger: '危险',
   },
   'zh-TW': {
     note: '提醒',
@@ -56,6 +87,10 @@ const CALLOUT_LABELS: Record<EffectiveCalloutLocale, Record<CalloutType, string>
     important: '重要',
     warning: '警告',
     caution: '風險',
+    info: '資訊',
+    success: '成功',
+    question: '問題',
+    danger: '危險',
   },
   'en-US': {
     note: 'Note',
@@ -63,5 +98,9 @@ const CALLOUT_LABELS: Record<EffectiveCalloutLocale, Record<CalloutType, string>
     important: 'Important',
     warning: 'Warning',
     caution: 'Caution',
+    info: 'Info',
+    success: 'Success',
+    question: 'Question',
+    danger: 'Danger',
   },
 };

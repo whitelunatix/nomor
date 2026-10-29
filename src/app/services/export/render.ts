@@ -49,13 +49,30 @@ export async function renderExportBody(snapshot: ExportSnapshot, options: Export
   }
   nodes.callout = node => {
     const config = getCalloutConfig(String(node.attrs.type));
-    const card = element('div', 'callout-card');
-    card.dataset.calloutType = config.type;
+    const title = String(node.attrs.title ?? '').trim() || snapshot.appearance.labels[config.type];
+    const fold = node.attrs.fold === 'open' || node.attrs.fold === 'closed'
+      ? node.attrs.fold
+      : null;
     const header = element('div', 'callout-header');
     const icon = element('span', 'callout-icon');
     icon.innerHTML = getCalloutIconSvg(config.icon);
-    header.append(icon, element('span', 'callout-title', snapshot.appearance.labels[config.type]));
+    header.append(icon, element('span', 'callout-title', title));
     const body = element('div', 'callout-body');
+    if (fold) {
+      // 折叠语法导出为原生 <details>，HTML 与 PDF 都能保留展开/收起状态。
+      const card = document.createElement('details');
+      card.className = 'callout-card';
+      card.dataset.calloutType = config.type;
+      card.dataset.calloutFold = fold;
+      card.open = fold === 'open';
+      const summary = document.createElement('summary');
+      summary.className = 'callout-header';
+      summary.append(...header.childNodes);
+      card.append(summary, body);
+      return { dom: card, contentDOM: body };
+    }
+    const card = element('div', 'callout-card');
+    card.dataset.calloutType = config.type;
     card.append(header, body);
     return { dom: card, contentDOM: body };
   };

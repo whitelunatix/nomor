@@ -27,6 +27,26 @@ describe('unmounted readonly export', () => {
     expect(dom.body.textContent).toContain('完整正文');
     expect(result.warnings).toEqual([]);
   });
+  it('导出自定义标题与折叠 Callout 时保留展开状态', async () => {
+    const input = snapshot('> [!INFO]+ 自定义标题\n> 内容\n\n> [!DANGER]-\n> 危险内容');
+    const result = await renderExportBody(input);
+    const dom = new DOMParser().parseFromString(result.html, 'text/html');
+    const callouts = dom.querySelectorAll('details.callout-card');
+    expect(callouts).toHaveLength(2);
+    expect(callouts[0].getAttribute('data-callout-type')).toBe('info');
+    expect(callouts[0].getAttribute('data-callout-fold')).toBe('open');
+    expect(callouts[0].hasAttribute('open')).toBe(true);
+    expect(callouts[0].querySelector('summary .callout-title')?.textContent).toBe('自定义标题');
+    expect(callouts[0].querySelector('.callout-body')?.textContent).toContain('内容');
+    expect(callouts[1].getAttribute('data-callout-type')).toBe('danger');
+    expect(callouts[1].getAttribute('data-callout-fold')).toBe('closed');
+    expect(callouts[1].hasAttribute('open')).toBe(false);
+    expect(callouts[1].querySelector('summary .callout-title')?.textContent).toBe(
+      input.appearance.labels.danger,
+    );
+    expect(result.warnings).toEqual([]);
+  });
+
   it('README HTML 的徽章与语言链接沿用编辑器的行内排版，内嵌前标记回退 HTML 图片', async () => {
     const input = snapshot([
       '<p align="center">\n  <a href="https://example.com/release">\n    <img src="https://img.shields.io/github/v/release/nomo-md/nomo" alt="release">\n  </a>\n  <img src="https://img.shields.io/badge/platform-Windows-blue" alt="platform">\n  <a href="./LICENSE">\n    <img src="https://badgen.net/badge/license/AGPL" alt="license">\n  </a>\n</p>',

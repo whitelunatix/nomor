@@ -35,6 +35,37 @@ describe('quicklook preview renderer', () => {
     expect(html).toContain('katex');
   });
 
+  it('renders custom callout titles and fold markers', () => {
+    const html = renderMarkdownPreview(
+      [
+        '> [!SUCCESS]+ 已完成',
+        '> 内容一',
+        '',
+        '> [!DANGER]-',
+        '> 内容二',
+        '',
+        '> [!QUESTION]',
+        '> 内容三',
+      ].join('\n'),
+      { fileName: 'demo.md' },
+    );
+    const dom = new DOMParser().parseFromString(`<body>${html}</body>`, 'text/html');
+    const folded = dom.querySelectorAll('details.callout-card');
+    expect(folded).toHaveLength(2);
+    expect(folded[0].getAttribute('data-callout-type')).toBe('success');
+    expect(folded[0].getAttribute('data-callout-fold')).toBe('open');
+    expect(folded[0].hasAttribute('open')).toBe(true);
+    expect(folded[0].querySelector('summary .callout-title')?.textContent).toBe('已完成');
+    expect(folded[0].querySelector('.callout-body')?.textContent).toContain('内容一');
+    expect(folded[1].getAttribute('data-callout-type')).toBe('danger');
+    expect(folded[1].getAttribute('data-callout-fold')).toBe('closed');
+    expect(folded[1].hasAttribute('open')).toBe(false);
+    expect(folded[1].querySelector('summary .callout-title')?.textContent).toBe('危险');
+    expect(folded[1].querySelector('.callout-body')?.textContent).toContain('内容二');
+    const question = dom.querySelector('div.callout-card[data-callout-type="question"]');
+    expect(question?.querySelector('.callout-title')?.textContent).toBe('问题');
+  });
+
   it('renders bare URLs and emails as safe links', () => {
     const html = renderMarkdownPreview(
       '访问 https://example.com/a_b 或 a@b.com',

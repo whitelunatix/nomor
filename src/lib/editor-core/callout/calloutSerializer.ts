@@ -6,7 +6,7 @@ import type { MarkdownSerializerState } from 'prosemirror-markdown';
 /**
  * callout 节点序列化器。
  * 输出格式：
- *   > [!TYPE]
+ *   > [!TYPE][+/-] 自定义标题
  *   > 第一段内容
  *   >
  *   > 第二段内容
@@ -15,11 +15,14 @@ import type { MarkdownSerializerState } from 'prosemirror-markdown';
  */
 export function serializeCallout(state: MarkdownSerializerState, node: ProseMirrorNode): void {
   const calloutType = (node.attrs.type as string).toUpperCase();
+  const fold = node.attrs.fold === 'open' ? '+' : node.attrs.fold === 'closed' ? '-' : '';
+  const title = String(node.attrs.title ?? '').trim();
+  const marker = `[!${calloutType}]${fold}${title ? ` ${title}` : ''}`;
 
   // 使用 wrapBlock 为每行添加 `> ` 前缀（和 blockquote 一致）
   state.wrapBlock('> ', null, node, () => {
     // 第一行输出 [!TYPE] 标记
-    state.write(`[!${calloutType}]\n`);
+    state.write(`${marker}\n`);
     // 首块是分割线时隔开标记行，避免 --- 将 [!TYPE] 解析成 Setext 标题。
     if (node.firstChild?.type.name === 'horizontal_rule') state.write('\n');
     // 渲染子内容（会被 wrapBlock 自动加 `> ` 前缀）

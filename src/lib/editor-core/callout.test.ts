@@ -56,6 +56,71 @@ describe('callout', () => {
     expect(state.doc.childCount).toBe(1);
   });
 
+  it('parses and serializes a custom title with a fold marker', () => {
+    const source = '> [!TIP]+ 自定义标题\n> 内容';
+    const doc = parseMarkdown(source);
+
+    expect(doc.child(0).attrs).toMatchObject({ type: 'tip', title: '自定义标题', fold: 'open' });
+    expect(doc.child(0).textContent).toBe('内容');
+    expect(serializeMarkdown(doc).trim()).toBe(source);
+  });
+
+  it('round-trips the collapsed fold marker', () => {
+    const doc = parseMarkdown('> [!WARNING]-\n> 内容');
+
+    expect(doc.child(0).attrs.fold).toBe('closed');
+    expect(doc.child(0).attrs.title).toBeNull();
+    expect(serializeMarkdown(doc).trim()).toBe('> [!WARNING]-\n> 内容');
+  });
+
+  it('keeps the marker line as body when the title is not separated by whitespace', () => {
+    const doc = parseMarkdown('> [!NOTE]内容');
+
+    expect(doc.child(0).attrs.title).toBeNull();
+    expect(doc.child(0).textContent).toBe('内容');
+  });
+
+  it.each(['INFO', 'SUCCESS', 'QUESTION', 'DANGER'])('supports the extended %s type', (type) => {
+    const doc = parseMarkdown(`> [!${type}]\n> 内容`);
+
+    expect(doc.child(0).attrs.type).toBe(type.toLowerCase());
+    expect(serializeMarkdown(doc).trim()).toBe(`> [!${type}]\n> 内容`);
+  });
+
+  it('toggles the fold state from the node view', async () => {
+    const target = document.createElement('div');
+    const editor = createEditorCore({ markdown: '> [!NOTE]-\n> 内容', target });
+    // 挂载后的第一帧会暂时禁用编辑，等状态恢复后再模拟点击。
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+
+    const card = target.querySelector<HTMLElement>('.callout-card');
+    const button = target.querySelector<HTMLButtonElement>('.callout-fold-btn');
+    expect(card?.classList.contains('is-folded')).toBe(true);
+    expect(button?.hidden).toBe(false);
+
+    button?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    expect(editor.getMarkdown()).toContain('> [!NOTE]+');
+    expect(card?.classList.contains('is-folded')).toBe(false);
+
+    button?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+    expect(editor.getMarkdown()).toContain('> [!NOTE]-');
+    expect(card?.classList.contains('is-folded')).toBe(true);
+
+    editor.destroy();
+    target.remove();
+  });
+
+  it('renders a custom title and hides the fold button without fold syntax', () => {
+    const target = document.createElement('div');
+    const editor = createEditorCore({ markdown: '> [!TIP] 自定义标题\n> 内容', target });
+
+    expect(target.querySelector('.callout-title')?.textContent).toBe('自定义标题');
+    expect(target.querySelector<HTMLButtonElement>('.callout-fold-btn')?.hidden).toBe(true);
+
+    editor.destroy();
+    target.remove();
+  });
+
   it('opens the type picker and applies the selected callout type', () => {
     const target = document.createElement('div');
     const editor = createEditorCore({ markdown: '', target });

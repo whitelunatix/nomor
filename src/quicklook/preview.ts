@@ -49,6 +49,10 @@ const CALLOUT_LABELS: Record<string, string> = {
   important: '重要',
   warning: '警告',
   caution: '风险',
+  info: '信息',
+  success: '成功',
+  question: '问题',
+  danger: '危险',
 };
 
 const ALLOWED_TAGS = new Set([
@@ -57,6 +61,7 @@ const ALLOWED_TAGS = new Set([
   'br',
   'code',
   'del',
+  'details',
   'div',
   'em',
   'figcaption',
@@ -79,6 +84,7 @@ const ALLOWED_TAGS = new Set([
   'span',
   'strong',
   'sub',
+  'summary',
   'sup',
   'table',
   'tbody',
@@ -95,7 +101,9 @@ const GLOBAL_ATTRS = new Set(['class', 'title']);
 const ATTRS_BY_TAG: Record<string, Set<string>> = {
   br: new Set(['data-nomo-break']),
   a: new Set(['href', 'title', 'target', 'rel']),
+  details: new Set(['class', 'open', 'data-callout-type', 'data-callout-fold']),
   div: new Set(['class', 'data-callout-type', 'data-nomo-tex']),
+  summary: new Set(['class']),
   img: new Set(['src', 'alt', 'title', 'width', 'height', 'class', 'loading']),
   input: new Set(['class', 'type', 'checked', 'disabled', 'aria-label']),
   span: new Set(['class', 'aria-hidden', 'data-nomo-tex']),
@@ -295,7 +303,8 @@ function createQuickLookMarkdownIt() {
   // 与编辑器共用裸链接规则，预览和正文显示同一批链接。
   registerBareLinkRule(md);
 
-  md.core.ruler.after('block', 'nomo_callout', (state) => {
+  // 必须等 inline 规则生成子 token 后再剥离标记行，否则自定义标题会把正文一起清空。
+  md.core.ruler.after('inline', 'nomo_callout', (state) => {
     transformCalloutTokens(state.tokens);
   });
 
@@ -308,10 +317,23 @@ function createQuickLookMarkdownIt() {
   md.renderer.rules.callout_open = (tokens, index) => {
     const token = tokens[index];
     const type = String(token.meta?.calloutType ?? 'note');
-    const label = CALLOUT_LABELS[type] ?? CALLOUT_LABELS.note;
-    return `<div class="callout-card" data-callout-type="${escapeHtml(type)}"><div class="callout-header"><span class="callout-icon" aria-hidden="true"></span><span class="callout-title">${label}</span></div><div class="callout-body">`;
+    const title = String(token.meta?.calloutTitle ?? '').trim();
+    const label = title || CALLOUT_LABELS[type] || CALLOUT_LABELS.note;
+    const fold = token.meta?.calloutFold === 'open' || token.meta?.calloutFold === 'closed'
+      ? token.meta.calloutFold
+      : null;
+    const header = `<span class="callout-icon" aria-hidden="true"></span><span class="callout-title">${escapeHtml(label)}</span>`;
+    if (fold) {
+      // 折叠语法在预览里用原生 <details>，和编辑器的展开状态保持一致。
+      const open = fold === 'open' ? ' open' : '';
+      return `<details class="callout-card" data-callout-type="${escapeHtml(type)}" data-callout-fold="${fold}"${open}><summary class="callout-header">${header}</summary><div class="callout-body">`;
+    }
+    return `<div class="callout-card" data-callout-type="${escapeHtml(type)}"><div class="callout-header">${header}</div><div class="callout-body">`;
   };
-  md.renderer.rules.callout_close = () => '</div></div>';
+  md.renderer.rules.callout_close = (tokens, index) => {
+    // callout_close 的 meta 与对应 open 一致，折叠时多关闭一层 details。
+    return tokens[index].meta?.calloutFold ? '</div></details>' : '</div></div>';
+  };
 
   md.renderer.rules.math_inline = (tokens, index) => {
     return `<span class="math-inline" data-nomo-tex="${escapeHtml(tokens[index].content)}"></span>`;
