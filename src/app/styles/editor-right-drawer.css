@@ -1,0 +1,123 @@
+/*
+ * 编辑器右侧抽屉的共用几何。
+ *
+ * 右侧只有两个抽屉：
+ *   1. AI 助手（横跨整张卡片，含工具栏）；
+ *   2. 「文档大纲 / 文档属性」共用的资料抽屉（在工具栏下方，两个标签页共用一个槽位）。
+ *
+ * 打开时在右侧预留等宽内边距，正文随之收缩，不会被浮层遮挡。
+ * 宽度用容器单位（cqw，容器是 .editor-shell）而不是视口单位：窗口不大但侧栏占位多时，
+ * 面板跟着编辑区一起收窄，不会把正文压成一条。
+ */
+
+:root {
+  --ai-drawer-width: clamp(320px, 30cqw, 430px);
+  /* 目录与文档属性共用一个抽屉，因此只需要一个宽度。 */
+  --side-drawer-width: clamp(300px, 22cqw, 360px);
+}
+
+/*
+ * 编辑器外壳的隐式列一旦按 max-content 撑开，最大化窗口时工具栏会把整块
+ * 编辑区顶出视口，抽屉也随之跑到屏幕外。显式收成弹性列后内容只能收缩。
+ */
+.editor-shell {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/*
+ * 卡片级预留：只有 AI 抽屉横跨整张卡片（含工具栏），记在卡片上。
+ * --drawer-* 同时供状态栏计算整体左移量。
+ */
+.editor-card {
+  --drawer-ai: 0px;
+  --drawer-side: 0px;
+  --drawer-total: calc(var(--drawer-ai) + var(--drawer-side));
+  box-sizing: border-box;
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  padding-right: var(--drawer-ai);
+  transition: padding-right 180ms ease;
+}
+
+.editor-card.ai-panel-open {
+  --drawer-ai: var(--ai-drawer-width);
+}
+
+/* 资料抽屉被拖走后变成浮层，不再占用正文宽度。 */
+.editor-card:has(.editor-side-drawer:not([data-positioned])) {
+  --drawer-side: var(--side-drawer-width);
+}
+
+/*
+ * 网格级预留：资料抽屉在工具栏下方，因此记在编辑网格上。
+ * 这里必须自己声明变量（而不是继承卡片的值），否则比较视图等没有卡片的
+ * 场景会拿到未定义的自定义属性，padding 声明整条失效。
+ */
+.editor-grid {
+  --drawer-side: 0px;
+  padding-right: var(--drawer-side);
+  transition: padding-right 180ms ease;
+}
+
+.editor-grid:has(> .editor-side-drawer:not([data-positioned])) {
+  --drawer-side: var(--side-drawer-width);
+}
+
+/*
+ * 状态栏跟着抽屉一起左移。它排在卡片内（z-index 高于面板），
+ * 否则会被抽屉压住或者反过来盖住面板底部。
+ */
+.editor-card > .statusbar {
+  right: calc(16px + var(--drawer-total));
+  transition: right 180ms ease;
+}
+
+/*
+ * 拖动分割线时关闭过渡：宽度要跟手，不能有一帧 180ms 的追赶。
+ * 松手后恢复过渡，双击复位时仍然平滑。
+ */
+.editor-card:has(.ai-drawer-resizer.resizing),
+.editor-grid:has(.side-drawer-resizer.resizing) {
+  transition: none;
+}
+
+.editor-card:has(.ai-drawer-resizer.resizing) > .statusbar,
+.editor-card:has(.side-drawer-resizer.resizing) > .statusbar {
+  transition: none;
+}
+
+/*
+ * 窄窗口下正文已经不够宽，两个抽屉统一退化为浮层：不再预留空间，
+ * 状态栏也不需要让位。断点与 app-responsive 的容器查询保持一致。
+ */
+@container (max-width: 900px) {
+  .editor-card.ai-panel-open,
+  .editor-card:has(.editor-side-drawer:not([data-positioned])),
+  .editor-grid:has(> .editor-side-drawer:not([data-positioned])) {
+    --drawer-ai: 0px;
+    --drawer-side: 0px;
+  }
+
+  .editor-grid > .editor-side-drawer:not([data-positioned]) {
+    inset: 8px 8px 8px auto;
+    width: min(380px, calc(100% - 16px));
+    border-width: 1px;
+    border-radius: var(--md-editor-radius-md);
+    box-shadow: 0 12px 32px rgba(22, 32, 44, 0.16);
+  }
+
+  /* 浮层宽度由断点规则接管，拖动分割线没有意义。 */
+  .editor-card .ai-drawer-resizer,
+  .editor-grid .side-drawer-resizer {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .editor-card,
+  .editor-grid,
+  .editor-card > .statusbar {
+    transition: none;
+  }
+}

@@ -1,0 +1,138 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  build-macos:
+    name: Build macOS (Apple Silicon)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and publish DMG
+        uses: tauri-apps/tauri-action@v0.6.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: '--target aarch64-apple-darwin --bundles dmg'
+          tagName: ${{ github.ref_name }}
+          releaseName: Nomo ${{ github.ref_name }}
+          releaseDraft: true
+
+  build-windows:
+    name: Build Windows (x64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and publish NSIS installer
+        uses: tauri-apps/tauri-action@v0.6.2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: '--bundles nsis'
+          tagName: ${{ github.ref_name }}
+          releaseName: Nomo ${{ github.ref_name }}
+          releaseDraft: true
+
+      - name: Package zip and MD5 checksums
+        shell: pwsh
+        run: |
+          $version = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          $app = 'src-tauri/target/release/nomo.exe'
+          $installer = Get-ChildItem src-tauri/target/release/bundle/nsis/*.exe | Select-Object -First 1
+          $zip = "Nomo_${version}_x64.zip"
+          Compress-Archive -Path $app -DestinationPath $zip -Force
+          $lines = @(
+            (Get-FileHash -Algorithm MD5 $installer.FullName | ForEach-Object { "$($_.Hash.ToLower())  $($installer.Name)" }),
+            (Get-FileHash -Algorithm MD5 $zip | ForEach-Object { "$($_.Hash.ToLower())  $zip" })
+          )
+          Set-Content -Path checksums.md5 -Value $lines -Encoding ascii
+
+      - name: Publish MD5 checksums
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $version = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          gh release upload '${{ github.ref_name }}' checksums.md5 --clobber
+          gh release upload '${{ github.ref_name }}' "Nomo_${version}_x64.zip" --clobber
+
+      - name: Describe Windows assets
+        shell: pwsh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $version = (Get-Content src-tauri/tauri.conf.json -Raw | ConvertFrom-Json).version
+          $notes = @(
+            'Windows 安装版：Nomo_${version}_x64-setup.exe',
+            'Nomo_${version}_x64.zip: 免安装版',
+            'checksums.md5: MD5 校验清单'
+          ) -join "`n"
+          gh release edit '${{ github.ref_name }}' --notes "$notes"
+
+  update-homebrew-cask:
+    name: update-homebrew-cask
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Refresh Casks/nomo.rb
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="${TAG#v}"
+          url="https://github.com/nomo-md/nomo/releases/download/v${version}/Nomo_${version}_aarch64.dmg"
+          curl -fsSL -o nomo.dmg "$url"
+          sha=$(sha256sum nomo.dmg | cut -d' ' -f1)
+          sed -i "s/^  version \".*\"/  version \"${version}\"/" Casks/nomo.rb
+          sed -i "s/^  sha256 \".*\"/  sha256 \"${sha}\"/" Casks/nomo.rb
+          rm -f nomo.dmg
+
+      - uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'chore: update Homebrew cask for ${{ github.ref_name }}'
+          file_pattern: Casks/nomo.rb

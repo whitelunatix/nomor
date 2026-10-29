@@ -1,0 +1,692 @@
+/*
+ * `.docx.md` 专用模式样式。
+ *
+ * 所有规则都挂在编辑器根节点的 `.docx-mode` 下，普通 Markdown 不会被命中。
+ * 指令行默认隐藏；结构类指令（分节/分页/页眉页脚/目录/分隔）显示为只读标记条；
+ * 打开“显示指令”调试开关后，所有指令行按原文显示。
+ */
+
+.docx-mode .docx-meta {
+  display: none;
+  user-select: none;
+}
+
+/* 结构类指令：正文位置上的只读标记，不进入可编辑文本。 */
+.docx-mode .docx-meta[data-docx-kind='section'],
+.docx-mode .docx-meta[data-docx-kind='page'],
+.docx-mode .docx-meta[data-docx-kind='headerFooter'],
+.docx-mode .docx-meta[data-docx-kind='toc'],
+.docx-mode .docx-meta[data-docx-kind='separator'],
+.docx-mode .docx-meta[data-docx-kind='snippet'],
+.docx-mode .docx-meta[data-docx-kind='shape'],
+.docx-mode .docx-meta[data-docx-kind='object'],
+.docx-mode .docx-meta[data-docx-kind='import'] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 26px;
+  margin: 10px 0;
+  padding: 3px 10px;
+  border: 1px dashed color-mix(in srgb, var(--md-editor-border) 76%, transparent);
+  border-radius: var(--md-editor-radius-sm, 4px);
+  background: color-mix(in srgb, var(--md-editor-surface) 92%, var(--md-editor-document-bg));
+  color: var(--md-editor-muted-fg);
+  font-size: 12px;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+}
+
+/* 可点击的结构标记：点击只锁定属性面板，不移动正文光标。 */
+.docx-mode .docx-meta[data-docx-activatable='true'] {
+  cursor: pointer;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.docx-mode .docx-meta[data-docx-activatable='true']:hover {
+  border-color: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 52%, transparent);
+}
+
+.docx-mode .docx-meta[data-docx-activatable='true']:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--md-editor-accent, #3b82f6) 60%, transparent);
+  outline-offset: 1px;
+}
+
+.docx-mode .docx-meta[data-docx-kind='toc'] {
+  border-style: solid;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+
+.docx-mode .docx-meta[data-docx-kind='separator'] {
+  border-style: none;
+  border-top: 1px solid color-mix(in srgb, var(--md-editor-border) 88%, transparent);
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  min-height: 0;
+  margin: 14px 0;
+}
+
+.docx-mode .docx-meta-badge {
+  flex: none;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 14%, transparent);
+  color: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 76%, var(--md-editor-fg));
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.docx-mode .docx-meta[data-docx-kind='separator'] .docx-meta-badge {
+  display: none;
+}
+
+.docx-mode .docx-meta-summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.docx-mode .docx-meta[data-docx-kind='separator'] .docx-meta-summary {
+  display: none;
+}
+
+.docx-mode .docx-meta-lines {
+  display: none;
+  min-width: 0;
+}
+
+/* 调试开关：显示原始指令行。 */
+.docx-mode.docx-directives-visible .docx-meta {
+  display: block;
+  margin: 8px 0;
+  padding: 6px 10px;
+  border: 1px dashed color-mix(in srgb, var(--md-editor-accent, #3b82f6) 46%, transparent);
+  border-radius: var(--md-editor-radius-sm, 4px);
+  background: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 6%, transparent);
+  font-family: var(--md-editor-mono-font, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.docx-mode.docx-directives-visible .docx-meta[data-docx-kind='separator'] {
+  border-top: 1px dashed color-mix(in srgb, var(--md-editor-accent, #3b82f6) 46%, transparent);
+}
+
+.docx-mode.docx-directives-visible .docx-meta-summary {
+  display: none;
+}
+
+.docx-mode.docx-directives-visible .docx-meta-lines {
+  display: block;
+  margin-top: 4px;
+  color: var(--md-editor-muted-fg);
+}
+
+.docx-mode.docx-directives-visible .docx-meta-line + .docx-meta-line {
+  margin-top: 2px;
+}
+
+/* ——— 源码模式：指令行与 [[...]] 高亮 ——— */
+/*
+ * 指令行紧贴行号列会显得拥挤：左侧留出一点内边距，并加宽左侧色条。
+ * 只影响指令行自身，正文行的左缘不变。
+ */
+.docx-source-directive {
+  background: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 6%, transparent);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--md-editor-accent, #3b82f6) 48%, transparent);
+  color: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 42%, var(--md-editor-fg));
+  font-family: var(--md-editor-mono-font, ui-monospace, SFMono-Regular, Menlo, monospace);
+  padding-left: 10px;
+}
+
+.docx-source-directive-invalid {
+  background: color-mix(in srgb, #dc2626 7%, transparent);
+  box-shadow: inset 3px 0 0 #dc2626;
+  color: #b91c1c;
+  font-family: var(--md-editor-mono-font, ui-monospace, SFMono-Regular, Menlo, monospace);
+  padding-left: 10px;
+}
+
+.docx-source-inline-marker {
+  padding: 0 1px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 10%, transparent);
+  color: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 74%, var(--md-editor-fg));
+  font-family: var(--md-editor-mono-font, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.92em;
+}
+
+.docx-source-inline-marker[data-docx-kind='DEL'] {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.docx-source-inline-marker-invalid {
+  padding: 0 1px;
+  border-bottom: 1px dashed #dc2626;
+  color: #b91c1c;
+  font-family: var(--md-editor-mono-font, ui-monospace, SFMono-Regular, Menlo, monospace);
+}
+
+/* ——— 行内标记 ——— */
+/* 成对标记的边界默认零宽，只提供光标停靠点；调试开关打开后显示原文。 */
+.docx-mode .docx-inline-marker {
+  display: inline-block;
+  width: 0;
+  height: 1em;
+  overflow: hidden;
+  vertical-align: text-bottom;
+  user-select: none;
+}
+
+.docx-mode .docx-inline-marker::before {
+  content: '';
+}
+
+/*
+ * 段落组两侧的标记必须是块级零高：留在行内时，`<p>` 会在每对标记处生成
+ * 匿名行盒（高度等于行距），每个逻辑段之间凭空多出一整行空白。
+ * 打开“显示指令原文”后由下面的调试规则恢复可见尺寸。
+ */
+.docx-mode .docx-inline-marker.docx-inline-block-marker {
+  display: block;
+  width: 0;
+  height: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 0;
+  line-height: 0;
+  overflow: hidden;
+  vertical-align: baseline;
+}
+
+.docx-mode.docx-directives-visible .docx-inline-marker {
+  display: inline-block;
+  width: auto;
+  height: auto;
+  margin: 0 1px;
+  padding: 0 3px;
+  border: 1px dashed color-mix(in srgb, var(--md-editor-accent, #3b82f6) 44%, transparent);
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 7%, transparent);
+  color: var(--md-editor-muted-fg);
+  font-family: var(--md-editor-mono-font, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 10.5px;
+  line-height: 1.5;
+  white-space: nowrap;
+  overflow: visible;
+}
+
+.docx-mode.docx-directives-visible .docx-inline-marker::before {
+  content: attr(data-docx-raw);
+}
+
+/* 交叉引用：正文里的“表 1 / 图 1 / (1-1) / [12]”。 */
+.docx-mode .docx-crossref {
+  color: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 84%, var(--md-editor-fg));
+  border-bottom: 1px dotted color-mix(in srgb, var(--md-editor-accent, #3b82f6) 52%, transparent);
+  cursor: help;
+}
+
+/* 引用目标不存在：红色点线提示，仍保留正文内容。 */
+.docx-mode .docx-crossref-missing {
+  color: #b91c1c;
+  border-bottom: 1px dotted #dc2626;
+  text-decoration: underline dotted rgba(220, 38, 38, 0.45);
+}
+
+/* Word 批注范围。 */
+.docx-mode .docx-comment-scope {
+  background: color-mix(in srgb, #facc15 22%, transparent);
+  border-bottom: 1px dotted color-mix(in srgb, #b45309 60%, transparent);
+  cursor: help;
+}
+
+.docx-mode .docx-revision-ins {
+  color: #15803d;
+  text-decoration: underline;
+  text-decoration-style: double;
+}
+
+.docx-mode .docx-revision-del {
+  color: #b91c1c;
+  text-decoration: line-through;
+}
+
+/*
+ * `[[NEW | & paragraph]]` 逻辑段组按 Word 语义独立成段。
+ * 宽度保持 auto：`indent.left`（margin-left）与 `indent.firstLine`
+ * （负 text-indent）才能形成正确的悬挂缩进。
+ */
+.docx-mode .docx-inline-paragraph-group {
+  display: block;
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--md-editor-border) 55%, transparent);
+}
+
+/*
+ * 段落组是块级盒，包住它的行内层也必须是块级，否则 `<p>` 会在每次层次切换处
+ * 生成匿名行盒（高度等于行距），段落之间凭空多出一整行空白。
+ * - `span[data-inline-source]` 是行内标记的 Mark 渲染层；
+ * - `img.ProseMirror-separator` 是 ProseMirror 插在原子边界的零尺寸分隔图。
+ */
+.docx-mode span[data-inline-source]:has(> .docx-inline-paragraph-group) {
+  display: block;
+}
+
+.docx-mode p:has(.docx-inline-paragraph-group) > img.ProseMirror-separator {
+  display: block !important;
+  margin: 0 !important;
+}
+
+/* 空段落组（`[[NEW | & paragraph]][[/NEW]]`）保留的垂直间距。 */
+.docx-mode .docx-inline-paragraph-spacer {
+  display: block;
+}
+
+.docx-mode .docx-inline-br {
+  display: block;
+  height: 0;
+  margin: 0;
+}
+
+.docx-mode .docx-inline-tab {
+  display: inline-block;
+  width: 2em;
+  height: 1em;
+  vertical-align: text-bottom;
+}
+
+/*
+ * `tabs: right 18.8cm`：把 `[[TAB]]` 撑成弹性间隔，后面的内容贴到右边界。
+ * 只对声明了右制表位的段落生效，普通段落的 TAB 仍是固定 2em。
+ */
+.docx-mode [data-docx-tabs='right'] {
+  display: flex;
+  align-items: baseline;
+}
+
+.docx-mode [data-docx-tabs='right'] .docx-inline-tab {
+  flex: 1 1 auto;
+  width: 0;
+  min-width: 0.5em;
+}
+
+.docx-mode .docx-note-ref {
+  color: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 82%, var(--md-editor-fg));
+  font-size: 0.72em;
+  vertical-align: super;
+  cursor: help;
+  user-select: none;
+}
+
+.docx-mode .docx-note-ref::after {
+  content: '注';
+}
+
+.docx-mode .docx-note-ref[data-docx-marker='EN']::after {
+  content: '尾';
+}
+
+.docx-mode .docx-slot {
+  display: inline-block;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 10%, transparent);
+  color: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 76%, var(--md-editor-fg));
+  font-size: 0.92em;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.docx-mode .docx-slot::after {
+  content: '片段 ' attr(data-docx-slot);
+}
+
+.docx-mode .docx-inline-literal {
+  padding: 0 2px;
+  border-bottom: 1px dashed #dc2626;
+  color: #b91c1c;
+  font-family: var(--md-editor-mono-font, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 0.9em;
+}
+
+/* 指令级别与 Markdown 标题级别不一致时的视觉提示。 */
+.docx-mode [data-docx-heading-level='1'] {
+  font-size: 2em;
+  font-weight: 700;
+}
+
+.docx-mode [data-docx-heading-level='2'] {
+  font-size: 1.6em;
+  font-weight: 700;
+}
+
+.docx-mode [data-docx-heading-level='3'] {
+  font-size: 1.32em;
+  font-weight: 600;
+}
+
+.docx-mode [data-docx-heading-level='4'] {
+  font-size: 1.16em;
+  font-weight: 600;
+}
+
+.docx-mode [data-docx-heading-level='5'] {
+  font-size: 1.06em;
+  font-weight: 600;
+}
+
+.docx-mode [data-docx-heading-level='6'],
+.docx-mode [data-docx-heading-level='7'],
+.docx-mode [data-docx-heading-level='8'],
+.docx-mode [data-docx-heading-level='9'] {
+  font-size: 1em;
+  font-weight: 600;
+}
+
+/* `@heading.numbering`：编号只进入 ::before，不写入正文或 Markdown。 */
+.docx-mode [data-docx-heading-number-text]::before {
+  content: attr(data-docx-heading-number-text);
+  white-space: pre;
+}
+
+.docx-mode [data-docx-list-format='square'] {
+  list-style-type: square;
+}
+
+.docx-mode [data-docx-list-format='disc'] {
+  list-style-type: disc;
+}
+
+.docx-mode [data-docx-list-format='circle'] {
+  list-style-type: circle;
+}
+
+.docx-mode [data-docx-list-format='decimal'] {
+  list-style-type: decimal;
+}
+
+.docx-mode [data-docx-list-format='lower-alpha'],
+.docx-mode [data-docx-list-format='lowerletter'] {
+  list-style-type: lower-alpha;
+}
+
+.docx-mode [data-docx-list-format='upper-alpha'],
+.docx-mode [data-docx-list-format='upperletter'] {
+  list-style-type: upper-alpha;
+}
+
+.docx-mode [data-docx-list-format='lower-roman'],
+.docx-mode [data-docx-list-format='lowerroman'] {
+  list-style-type: lower-roman;
+}
+
+.docx-mode [data-docx-list-format='upper-roman'],
+.docx-mode [data-docx-list-format='upperroman'] {
+  list-style-type: upper-roman;
+}
+
+.docx-mode [data-docx-list-format='cjk-ideographic'] {
+  list-style-type: cjk-ideographic;
+}
+
+/* ——— 图片 ——— */
+/*
+ * 编辑器给普通 Markdown 图片设了 `min-width: 160px`，方便点选；Word 里
+ * 0.78cm 的图标只有 30px，docx 模式必须尊重声明尺寸。
+ */
+.prosemirror-host.docx-mode .ProseMirror .image-node img {
+  min-width: 0;
+  min-height: 0;
+}
+
+.docx-mode [data-docx-image] {
+  text-align: var(--docx-image-align, inherit);
+}
+
+.docx-mode [data-docx-image] .image-node img,
+.docx-mode .docx-inline-region .image-node img,
+.docx-mode .nomo-table-scroll th .image-node img,
+.docx-mode .nomo-table-scroll td .image-node img {
+  width: var(--docx-image-width, auto);
+  height: var(--docx-image-height, auto);
+  max-width: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.docx-mode [data-docx-image-fit='max'] .image-node img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.docx-mode [data-docx-image-wrap='square'] .image-node,
+.docx-mode [data-docx-image-wrap='tight'] .image-node,
+.docx-mode [data-docx-image-wrap='through'] .image-node {
+  float: right;
+  margin: 0 0 0.6em 1em;
+}
+
+.docx-mode [data-docx-image-wrap='topandbottom'] .image-node {
+  display: block;
+  margin: 0.6em auto;
+}
+
+/* ——— 列表 ——— */
+/*
+ * 编号/项目符号的位置由 `<ol>/<ul>` 的列表几何决定；段落指令里的
+ * `text-indent` 会被列表项继承，叠加出一段「编号后像按了 Tab」的空白。
+ * 列表内容统一清零，缩进交给列表自身。
+ */
+.docx-mode ol,
+.docx-mode ul,
+.docx-mode ol > li,
+.docx-mode ul > li,
+.docx-mode ol > li > p,
+.docx-mode ul > li > p {
+  text-indent: 0;
+}
+
+/* ——— 图题 / 表题 ——— */
+.docx-mode [data-docx-caption] {
+  text-indent: 0;
+}
+
+.docx-mode [data-docx-caption-number]::before {
+  content: attr(data-docx-caption-prefix) attr(data-docx-caption-number) '\3000';
+  white-space: nowrap;
+}
+
+/* ——— 公式编号 ——— */
+.docx-mode .math-block[data-docx-formula-number] {
+  position: relative;
+  padding-right: 4.5em;
+}
+
+.docx-mode .math-block[data-docx-formula-number]::after {
+  content: '(' attr(data-docx-formula-number) ')';
+  position: absolute;
+  right: 0.5em;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--md-editor-muted-fg);
+  font-size: 0.92em;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ——— 参考文献 ——— */
+.docx-mode [data-docx-reference] {
+  padding-left: 2.2em;
+  text-indent: -2.2em;
+}
+
+.docx-mode [data-docx-reference-auto]::before {
+  content: '[' attr(data-docx-reference-id) ']\00a0';
+  white-space: nowrap;
+}
+
+/* ——— 分页 / 分栏 ——— */
+/*
+ * 分页线要比普通分隔线显眼：加粗到 2px，并在线的内侧留出足够的空白，
+ * 让「上一页结束 / 下一页开始」一眼可见；标签做成小圆角胶囊，贴着线内侧。
+ */
+.docx-mode [data-docx-break='before'] {
+  position: relative;
+  border-top: 2px dashed color-mix(in srgb, var(--md-editor-accent) 55%, var(--md-editor-border));
+  padding-top: 22px;
+}
+
+.docx-mode [data-docx-break='before']::before {
+  content: attr(data-docx-break-label);
+  position: absolute;
+  top: 5px;
+  left: 0;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--md-editor-accent) 14%,
+    var(--md-editor-document-bg, var(--md-editor-surface))
+  );
+  color: var(--md-editor-accent);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+
+.docx-mode [data-docx-break='after'] {
+  position: relative;
+  border-bottom: 2px dashed color-mix(in srgb, var(--md-editor-accent) 55%, var(--md-editor-border));
+  padding-bottom: 22px;
+}
+
+.docx-mode [data-docx-break='after']::after {
+  content: attr(data-docx-break-label) '（后）';
+  position: absolute;
+  bottom: 5px;
+  left: 0;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(
+    in srgb,
+    var(--md-editor-accent) 14%,
+    var(--md-editor-document-bg, var(--md-editor-surface))
+  );
+  color: var(--md-editor-accent);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+
+/* ——— 表格：边框 / 对齐 / 表头 / 表体 ——— */
+/*
+ * 普通 Markdown 的 42px 上边距是给表格控件留的；Word 里表格紧跟上一个
+ * 段落，间距由段落的 space.before/after 决定。docx 模式改为贴合排版。
+ */
+.prosemirror-host.docx-mode .nomo-table-scroll {
+  margin: 0;
+}
+
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-table] > table {
+  border-collapse: collapse;
+}
+
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-table] th,
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-table] td {
+  border: 0;
+  padding: var(--docx-table-padding, 9px 11px);
+}
+
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-table][data-docx-border~='all'] th,
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-table][data-docx-border~='all'] td {
+  border: var(--docx-table-border, 0.5pt solid #000000);
+}
+
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-border~='top'] tbody > tr:first-child > th,
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-border~='top'] tbody > tr:first-child > td {
+  border-top: var(--docx-table-border, 0.5pt solid #000000);
+}
+
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-border~='bottom'] tbody > tr:last-child > td,
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-border~='bottom'] tbody > tr:last-child > th {
+  border-bottom: var(--docx-table-border, 0.5pt solid #000000);
+}
+
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-border~='left'] tbody > tr > th:first-child,
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-border~='left'] tbody > tr > td:first-child {
+  border-left: var(--docx-table-border, 0.5pt solid #000000);
+}
+
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-border~='right'] tbody > tr > th:last-child,
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-border~='right'] tbody > tr > td:last-child {
+  border-right: var(--docx-table-border, 0.5pt solid #000000);
+}
+
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-border~='insideh'] tbody > tr + tr > td,
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-border~='insideh'] tbody > tr + tr > th {
+  border-top: var(--docx-table-border, 0.5pt solid #000000);
+}
+
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-border~='insidev'] tbody > tr > th + th,
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-border~='insidev'] tbody > tr > th + td,
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-border~='insidev'] tbody > tr > td + td,
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-border~='insidev'] tbody > tr > td + th {
+  border-left: var(--docx-table-border, 0.5pt solid #000000);
+}
+
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-table-align='center'] > table {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-table-align='right'] > table {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-table] tbody > tr:first-child > th {
+  /*
+   * Word 表格的表头底纹来自显式 `@table.header | bg`。很多排版表格把第一行
+   * 当作零高定位行（`[[NEW | & paragraph]]` 空组），沿用主题灰色会凭空出现
+   * 一条灰带，所以没有声明底色时不涂。
+   */
+  background-color: var(--docx-header-bg, transparent);
+  color: var(--docx-header-color, inherit);
+  font-weight: var(--docx-header-font-weight, inherit);
+  font-size: inherit;
+  text-align: var(--docx-header-align, inherit);
+}
+
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-table] tbody > tr > td {
+  text-align: var(--docx-body-align, inherit);
+  vertical-align: var(--docx-body-valign, top);
+}
+
+/* 合并箭头：源文件仍是箭头字符，只降低对比度说明由 Word 编译时合并。 */
+.docx-mode [data-docx-merge-arrow='true'] {
+  color: color-mix(in srgb, currentColor 42%, transparent);
+  text-align: center;
+  font-size: 0.9em;
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 4px,
+    color-mix(in srgb, var(--md-editor-border) 24%, transparent) 4px 5px
+  );
+}
+
+.prosemirror-host.docx-mode .nomo-table-scroll[data-docx-table-continuation]::before {
+  content: '续表 · 编译器按行拆分';
+  display: block;
+  padding: 2px 0 4px;
+  color: var(--md-editor-muted-fg);
+  font-size: 10.5px;
+  letter-spacing: 0.02em;
+}

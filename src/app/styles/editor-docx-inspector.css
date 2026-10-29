@@ -1,0 +1,648 @@
+/*
+ * `.docx.md` 属性面板。
+ *
+ * 它不再单独占用一个抽屉：作为「文档大纲 / 文档属性」共用抽屉的第二页，
+ * 抽屉的几何、边框与背景都由 .content-outline 负责（见 editor-outline.css），
+ * 这里只负责内容区的排布。
+ * 所有控件只读写指令行，正文内容仍由 ProseMirror 编辑。
+ */
+
+.docx-inspector {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  color: var(--md-editor-fg);
+  font-size: 12.5px;
+}
+
+.docx-inspector-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--md-editor-border) 60%, transparent);
+}
+
+/* 嵌进共用抽屉后，标题和关闭按钮由抽屉头部提供，这里只保留操作按钮。 */
+.docx-inspector.embedded .docx-inspector-header {
+  padding: 4px 8px;
+  min-height: 30px;
+}
+
+.docx-inspector-header strong {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.docx-inspector-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.docx-icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--md-editor-muted-fg);
+  cursor: pointer;
+}
+
+.docx-icon-button:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--md-editor-border) 70%, transparent);
+  background: color-mix(in srgb, var(--md-editor-fg) 5%, transparent);
+  color: var(--md-editor-fg);
+}
+
+.docx-icon-button.active {
+  background: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 14%, transparent);
+  color: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 82%, var(--md-editor-fg));
+}
+
+.docx-icon-button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.docx-inspector-target {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 4px;
+  min-width: 0;
+}
+
+.docx-kind-chip {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 12%, transparent);
+  color: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 78%, var(--md-editor-fg));
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.docx-target-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--md-editor-fg);
+  font-weight: 600;
+}
+
+.docx-table-position {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px 8px;
+  color: var(--md-editor-muted-fg);
+  font-size: 11.5px;
+}
+
+.docx-merged-chip {
+  padding: 0 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #f59e0b 16%, transparent);
+  color: #b45309;
+  font-size: 10.5px;
+}
+
+.docx-inspector-tabs {
+  display: flex;
+  gap: 2px;
+  margin: 0 12px;
+  padding: 2px;
+  border: 1px solid color-mix(in srgb, var(--md-editor-border) 72%, transparent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--md-editor-fg) 3%, transparent);
+}
+
+.docx-inspector-tabs button {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--md-editor-muted-fg);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.docx-inspector-tabs button.active {
+  background: var(--md-editor-surface);
+  color: var(--md-editor-fg);
+  font-weight: 600;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08);
+}
+
+.docx-inspector-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 12px 14px;
+}
+
+.docx-stale {
+  margin: 0 0 8px;
+  padding: 6px 8px;
+  border-radius: 5px;
+  background: color-mix(in srgb, #f59e0b 14%, transparent);
+  color: #92400e;
+  font-size: 11.5px;
+}
+
+.docx-directive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.docx-directive-card {
+  border: 1px solid color-mix(in srgb, var(--md-editor-border) 74%, transparent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--md-editor-fg) 2%, transparent);
+  overflow: hidden;
+}
+
+.docx-directive-card.invalid {
+  border-color: color-mix(in srgb, #dc2626 46%, transparent);
+}
+
+.docx-directive-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--md-editor-border) 62%, transparent);
+  background: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 6%, transparent);
+}
+
+.docx-directive-keyword {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--md-editor-mono-font, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 11.5px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 72%, var(--md-editor-fg));
+}
+
+.docx-directive-line {
+  flex: none;
+  margin-left: auto;
+  color: var(--md-editor-muted-fg);
+  font-size: 10.5px;
+}
+
+.docx-field-group {
+  padding: 7px 8px 6px;
+}
+
+.docx-field-group + .docx-field-group {
+  border-top: 1px dashed color-mix(in srgb, var(--md-editor-border) 62%, transparent);
+}
+
+.docx-group-label {
+  margin-bottom: 4px;
+  color: var(--md-editor-muted-fg);
+  font-size: 10.5px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.docx-group-target {
+  margin-left: 6px;
+  color: var(--md-editor-accent, #3b82f6);
+  text-transform: none;
+}
+
+.docx-field-row {
+  display: grid;
+  grid-template-columns: 5.6em minmax(0, 1fr) 24px;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.docx-field-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--md-editor-muted-fg);
+  font-size: 11.5px;
+}
+
+.docx-field-control {
+  width: 100%;
+  min-width: 0;
+  padding: 3px 6px;
+  border: 1px solid color-mix(in srgb, var(--md-editor-border) 78%, transparent);
+  border-radius: 4px;
+  background: var(--md-editor-document-bg, var(--md-editor-surface));
+  color: var(--md-editor-fg);
+  font-family: var(--md-editor-mono-font, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.docx-field-control:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 62%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--md-editor-accent, #3b82f6) 16%, transparent);
+}
+
+select.docx-field-control {
+  font-family: inherit;
+}
+
+.docx-field-checkbox {
+  justify-self: start;
+  width: 15px;
+  height: 15px;
+  accent-color: var(--md-editor-accent, #3b82f6);
+}
+
+.docx-color-field {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.docx-color-picker {
+  flex: none;
+  width: 24px;
+  height: 23px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--md-editor-border) 78%, transparent);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.docx-add-field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 24px 24px;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.docx-add-field-trigger,
+.docx-add-directive {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 3px;
+  padding: 3px 6px;
+  border: 1px dashed color-mix(in srgb, var(--md-editor-border) 82%, transparent);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--md-editor-muted-fg);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.docx-add-field-trigger:hover,
+.docx-add-directive:hover {
+  border-color: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 46%, transparent);
+  color: var(--md-editor-accent, #3b82f6);
+}
+
+.docx-directive-raw {
+  padding: 0 8px 6px;
+  color: var(--md-editor-muted-fg);
+  font-size: 11px;
+}
+
+.docx-directive-raw summary {
+  cursor: pointer;
+  user-select: none;
+}
+
+.docx-directive-raw code {
+  display: block;
+  margin-top: 4px;
+  padding: 5px 6px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--md-editor-fg) 4%, transparent);
+  font-family: var(--md-editor-mono-font, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 10.5px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.docx-diagnostics {
+  margin: 0;
+  padding: 6px 10px 6px 22px;
+  color: #b45309;
+  font-size: 11px;
+}
+
+.docx-diagnostics li.error {
+  color: #b91c1c;
+}
+
+.docx-template-adder {
+  margin-top: 10px;
+}
+
+.docx-template-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.docx-template-list button {
+  padding: 3px 7px;
+  border: 1px solid color-mix(in srgb, var(--md-editor-border) 78%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--md-editor-muted-fg);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.docx-template-list button:hover {
+  border-color: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 46%, transparent);
+  color: var(--md-editor-accent, #3b82f6);
+}
+
+.docx-effective {
+  margin-top: 10px;
+  border-top: 1px dashed color-mix(in srgb, var(--md-editor-border) 72%, transparent);
+  padding-top: 8px;
+}
+
+.docx-effective summary {
+  cursor: pointer;
+  user-select: none;
+  color: var(--md-editor-fg);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.docx-effective h4 {
+  margin: 8px 0 2px;
+  color: var(--md-editor-muted-fg);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.docx-fact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 6px 0 0;
+}
+
+.docx-fact-list > div {
+  display: grid;
+  grid-template-columns: 6.4em minmax(0, 1fr);
+  gap: 6px;
+  align-items: baseline;
+}
+
+.docx-fact-list dt {
+  color: var(--md-editor-muted-fg);
+  font-size: 11px;
+}
+
+.docx-fact-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--md-editor-mono-font, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 11px;
+}
+
+.docx-fact-list .docx-style-variable dd {
+  opacity: 0.72;
+}
+
+.docx-document-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.docx-document-entry {
+  border: 1px solid color-mix(in srgb, var(--md-editor-border) 66%, transparent);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.docx-document-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 5px 8px;
+  border: 0;
+  background: transparent;
+  color: var(--md-editor-fg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.docx-document-row:hover,
+.docx-document-row.open {
+  background: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 6%, transparent);
+}
+
+.docx-inspector .docx-meta-badge {
+  flex: none;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 13%, transparent);
+  color: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 78%, var(--md-editor-fg));
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.docx-section-index {
+  flex: none;
+  color: var(--md-editor-muted-fg);
+  font-size: 10.5px;
+}
+
+.docx-document-summary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--md-editor-muted-fg);
+  font-size: 11px;
+}
+
+.docx-document-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px 8px;
+  border-top: 1px solid color-mix(in srgb, var(--md-editor-border) 60%, transparent);
+}
+
+.docx-variable-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.docx-variable-list code {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--md-editor-fg) 6%, transparent);
+  font-size: 11px;
+}
+
+.docx-empty-hint {
+  margin: 6px 0;
+  color: var(--md-editor-muted-fg);
+  font-size: 11.5px;
+}
+
+.docx-diagnostics {
+  margin: 2px 0 6px;
+  border: 1px solid color-mix(in srgb, var(--md-editor-border) 66%, transparent);
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--md-editor-fg) 2%, transparent);
+  overflow: hidden;
+}
+
+.docx-diagnostics > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  color: var(--md-editor-fg);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.docx-diagnostics > summary::-webkit-details-marker {
+  display: none;
+}
+
+.docx-diagnostics > summary::before {
+  content: '▸';
+  flex: none;
+  color: var(--md-editor-muted-fg);
+  transition: transform 120ms ease;
+}
+
+.docx-diagnostics[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.docx-diagnostics-counts {
+  margin-left: auto;
+  color: var(--md-editor-muted-fg);
+  font-size: 10.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.docx-diagnostics-counts.has-errors {
+  color: #b91c1c;
+}
+
+.docx-diagnostics-meta {
+  margin: 0;
+  padding: 0 9px 5px;
+  color: var(--md-editor-muted-fg);
+  font-size: 10.5px;
+}
+
+.docx-diagnostic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding: 0 8px 8px;
+  list-style: none;
+}
+
+.docx-diagnostic {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 5px;
+  background: color-mix(in srgb, #f59e0b 8%, transparent);
+}
+
+.docx-diagnostic.is-error {
+  background: color-mix(in srgb, #dc2626 8%, transparent);
+}
+
+.docx-diagnostic-severity {
+  flex: none;
+  margin-top: 1px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, #f59e0b 20%, transparent);
+  color: #92400e;
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.docx-diagnostic.is-error .docx-diagnostic-severity {
+  background: color-mix(in srgb, #dc2626 16%, transparent);
+  color: #b91c1c;
+}
+
+.docx-diagnostic-message {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--md-editor-fg);
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+button.docx-diagnostic-message {
+  cursor: pointer;
+}
+
+button.docx-diagnostic-message:hover {
+  color: color-mix(in srgb, var(--md-editor-accent, #3b82f6) 82%, var(--md-editor-fg));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.docx-diagnostic-line {
+  display: inline-block;
+  margin-left: 5px;
+  color: var(--md-editor-muted-fg);
+  font-family: var(--md-editor-mono-font, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: 10px;
+  white-space: nowrap;
+}
+

@@ -1,0 +1,1171 @@
+{
+  "bare_groups": [
+    "paragraph",
+    "image",
+    "table"
+  ],
+  "directive_aliases": {
+    "font": {
+      "background-color": "highlight",
+      "font": "mix",
+      "font-family": "mix",
+      "font-size": "size",
+      "font.name": "mix",
+      "font.size": "size",
+      "letter-spacing": "spacing",
+      "name": "mix"
+    },
+    "formula": {
+      "style": "math.style",
+      "weight": "math.weight"
+    },
+    "image": {
+      "align": "layout.align",
+      "fit": "layout.fit",
+      "height": "size.height",
+      "width": "size.width"
+    },
+    "paragraph": {
+      "alignment": "align",
+      "first.line.indent": "indent.firstLine",
+      "left.indent": "indent.left",
+      "line": "line.spacing",
+      "right.indent": "indent.right"
+    },
+    "shape": {
+      "height": "size.height",
+      "rotate": "rotation",
+      "width": "size.width"
+    }
+  },
+  "directives": {
+    "font": {
+      "bold": {
+        "canonical": "bold",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "color": {
+        "canonical": "color",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "en": {
+        "canonical": "en",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "highlight": {
+        "canonical": "highlight",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "italic": {
+        "canonical": "italic",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "mix": {
+        "canonical": "mix",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "size": {
+        "canonical": "size",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "spacing": {
+        "canonical": "spacing",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "strike": {
+        "canonical": "strike",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "style": {
+        "canonical": "style",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "subscript": {
+        "canonical": "subscript",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "superscript": {
+        "canonical": "superscript",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "underline": {
+        "canonical": "underline",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "zh": {
+        "canonical": "zh",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      }
+    },
+    "formula": {
+      "decorators": {
+        "canonical": "decorators",
+        "contexts": [
+          "group"
+        ]
+      },
+      "id": {
+        "canonical": "id",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "layout.align": {
+        "canonical": "layout.align",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "layout.display": {
+        "canonical": "layout.display",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "layout.spacing": {
+        "canonical": "layout.spacing",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "math.style": {
+        "canonical": "math.style",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "math.weight": {
+        "canonical": "math.weight",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "number": {
+        "canonical": "number",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      }
+    },
+    "heading": {
+      "decorators": {
+        "canonical": "decorators",
+        "contexts": [
+          "group"
+        ]
+      },
+      "level": {
+        "canonical": "level",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      }
+    },
+    "image": {
+      "alt": {
+        "canonical": "alt",
+        "contexts": [
+          "group"
+        ]
+      },
+      "decorators": {
+        "canonical": "decorators",
+        "contexts": [
+          "group"
+        ]
+      },
+      "layout.align": {
+        "canonical": "layout.align",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "layout.fit": {
+        "canonical": "layout.fit",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "layout.hAlign": {
+        "canonical": "layout.hAlign",
+        "contexts": [
+          "group"
+        ]
+      },
+      "layout.hFrom": {
+        "canonical": "layout.hFrom",
+        "contexts": [
+          "group"
+        ]
+      },
+      "layout.hOffset": {
+        "canonical": "layout.hOffset",
+        "contexts": [
+          "group"
+        ]
+      },
+      "layout.vAlign": {
+        "canonical": "layout.vAlign",
+        "contexts": [
+          "group"
+        ]
+      },
+      "layout.vFrom": {
+        "canonical": "layout.vFrom",
+        "contexts": [
+          "group"
+        ]
+      },
+      "layout.vOffset": {
+        "canonical": "layout.vOffset",
+        "contexts": [
+          "group"
+        ]
+      },
+      "size.height": {
+        "canonical": "size.height",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "size.width": {
+        "canonical": "size.width",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "wrap": {
+        "canonical": "wrap",
+        "contexts": [
+          "group"
+        ]
+      }
+    },
+    "image_decorator": {
+      "index": {
+        "canonical": "index",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "layout.align": {
+        "canonical": "layout.align",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "layout.fit": {
+        "canonical": "layout.fit",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "size.height": {
+        "canonical": "size.height",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "size.width": {
+        "canonical": "size.width",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      }
+    },
+    "list": {
+      "decorators": {
+        "canonical": "decorators",
+        "contexts": [
+          "group"
+        ]
+      },
+      "nest": {
+        "canonical": "nest",
+        "contexts": [
+          "group"
+        ]
+      },
+      "ordered": {
+        "canonical": "ordered",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "start": {
+        "canonical": "start",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "unordered": {
+        "canonical": "unordered",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      }
+    },
+    "numbering": {
+      "alignment": {
+        "canonical": "alignment",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "color": {
+        "canonical": "color",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "continue": {
+        "canonical": "continue",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "format": {
+        "canonical": "format",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "id": {
+        "canonical": "id",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "indent.hanging": {
+        "canonical": "indent.hanging",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "indent.left": {
+        "canonical": "indent.left",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "level": {
+        "canonical": "level",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "restart": {
+        "canonical": "restart",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "start": {
+        "canonical": "start",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "suffix": {
+        "canonical": "suffix",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "text": {
+        "canonical": "text",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      }
+    },
+    "paragraph": {
+      "adjustRight.indent": {
+        "canonical": "adjustRight.indent",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "align": {
+        "canonical": "align",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "empty": {
+        "canonical": "empty",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "indent.firstLine": {
+        "canonical": "indent.firstLine",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "indent.firstLineChars": {
+        "canonical": "indent.firstLineChars",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "indent.hangingChars": {
+        "canonical": "indent.hangingChars",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "indent.left": {
+        "canonical": "indent.left",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "indent.right": {
+        "canonical": "indent.right",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "keepLines": {
+        "canonical": "keepLines",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "keepNext": {
+        "canonical": "keepNext",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "line.rule": {
+        "canonical": "line.rule",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "line.spacing": {
+        "canonical": "line.spacing",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "mirror.indents": {
+        "canonical": "mirror.indents",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "outline.level": {
+        "canonical": "outline.level",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "snap.toGrid": {
+        "canonical": "snap.toGrid",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "space.after": {
+        "canonical": "space.after",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "space.afterAuto": {
+        "canonical": "space.afterAuto",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "space.before": {
+        "canonical": "space.before",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "space.beforeAuto": {
+        "canonical": "space.beforeAuto",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "special": {
+        "canonical": "special",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "special.by": {
+        "canonical": "special.by",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "tabs": {
+        "canonical": "tabs",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "widowControl": {
+        "canonical": "widowControl",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      }
+    },
+    "shape": {
+      "above": {
+        "canonical": "above",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "adjust": {
+        "canonical": "adjust",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "align-x": {
+        "canonical": "align-x",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "align-y": {
+        "canonical": "align-y",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "arrow.head": {
+        "canonical": "arrow.head",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "arrow.tail": {
+        "canonical": "arrow.tail",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "behind": {
+        "canonical": "behind",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "below": {
+        "canonical": "below",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "fill": {
+        "canonical": "fill",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "fill.angle": {
+        "canonical": "fill.angle",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "flip.h": {
+        "canonical": "flip.h",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "flip.v": {
+        "canonical": "flip.v",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "from": {
+        "canonical": "from",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "gap-x": {
+        "canonical": "gap-x",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "gap-y": {
+        "canonical": "gap-y",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "id": {
+        "canonical": "id",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "inside": {
+        "canonical": "inside",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "left-of": {
+        "canonical": "left-of",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "line.color": {
+        "canonical": "line.color",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "line.dash": {
+        "canonical": "line.dash",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "line.join": {
+        "canonical": "line.join",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "line.visible": {
+        "canonical": "line.visible",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "line.width": {
+        "canonical": "line.width",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "name": {
+        "canonical": "name",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "overlap": {
+        "canonical": "overlap",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "padding": {
+        "canonical": "padding",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "points": {
+        "canonical": "points",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "position.h": {
+        "canonical": "position.h",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "position.h.align": {
+        "canonical": "position.h.align",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "position.h.from": {
+        "canonical": "position.h.from",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "position.v": {
+        "canonical": "position.v",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "position.v.align": {
+        "canonical": "position.v.align",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "position.v.from": {
+        "canonical": "position.v.from",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "preset": {
+        "canonical": "preset",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "right-of": {
+        "canonical": "right-of",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "rotation": {
+        "canonical": "rotation",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "same-size-as": {
+        "canonical": "same-size-as",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "shadow": {
+        "canonical": "shadow",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "shadow.color": {
+        "canonical": "shadow.color",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "size.height": {
+        "canonical": "size.height",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "size.width": {
+        "canonical": "size.width",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "text.anchor": {
+        "canonical": "text.anchor",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "text.autofit": {
+        "canonical": "text.autofit",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "to": {
+        "canonical": "to",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "wrap": {
+        "canonical": "wrap",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      },
+      "z": {
+        "canonical": "z",
+        "contexts": [
+          "block",
+          "group"
+        ]
+      }
+    },
+    "table": {
+      "align": {
+        "canonical": "align",
+        "contexts": [
+          "group"
+        ]
+      },
+      "bg": {
+        "canonical": "bg",
+        "contexts": [
+          "group"
+        ]
+      },
+      "border.color": {
+        "canonical": "border.color",
+        "contexts": [
+          "group"
+        ]
+      },
+      "border.style": {
+        "canonical": "border.style",
+        "contexts": [
+          "group"
+        ]
+      },
+      "border.thickness": {
+        "canonical": "border.thickness",
+        "contexts": [
+          "group"
+        ]
+      },
+      "border.visible": {
+        "canonical": "border.visible",
+        "contexts": [
+          "group"
+        ]
+      },
+      "cell.fitText": {
+        "canonical": "cell.fitText",
+        "contexts": [
+          "group"
+        ]
+      },
+      "cell.noWrap": {
+        "canonical": "cell.noWrap",
+        "contexts": [
+          "group"
+        ]
+      },
+      "cell.spacing": {
+        "canonical": "cell.spacing",
+        "contexts": [
+          "group"
+        ]
+      },
+      "cell.textDirection": {
+        "canonical": "cell.textDirection",
+        "contexts": [
+          "group"
+        ]
+      },
+      "col.hAlign": {
+        "canonical": "col.hAlign",
+        "contexts": [
+          "group"
+        ]
+      },
+      "col.width": {
+        "canonical": "col.width",
+        "contexts": [
+          "group"
+        ]
+      },
+      "color": {
+        "canonical": "color",
+        "contexts": [
+          "group"
+        ]
+      },
+      "float.bottomFromText": {
+        "canonical": "float.bottomFromText",
+        "contexts": [
+          "group"
+        ]
+      },
+      "float.horzAnchor": {
+        "canonical": "float.horzAnchor",
+        "contexts": [
+          "group"
+        ]
+      },
+      "float.leftFromText": {
+        "canonical": "float.leftFromText",
+        "contexts": [
+          "group"
+        ]
+      },
+      "float.overlap": {
+        "canonical": "float.overlap",
+        "contexts": [
+          "group"
+        ]
+      },
+      "float.rightFromText": {
+        "canonical": "float.rightFromText",
+        "contexts": [
+          "group"
+        ]
+      },
+      "float.topFromText": {
+        "canonical": "float.topFromText",
+        "contexts": [
+          "group"
+        ]
+      },
+      "float.vertAnchor": {
+        "canonical": "float.vertAnchor",
+        "contexts": [
+          "group"
+        ]
+      },
+      "float.x": {
+        "canonical": "float.x",
+        "contexts": [
+          "group"
+        ]
+      },
+      "float.y": {
+        "canonical": "float.y",
+        "contexts": [
+          "group"
+        ]
+      },
+      "layout.align": {
+        "canonical": "layout.align",
+        "contexts": [
+          "group"
+        ]
+      },
+      "layout.fit": {
+        "canonical": "layout.fit",
+        "contexts": [
+          "group"
+        ]
+      },
+      "layout.indent": {
+        "canonical": "layout.indent",
+        "contexts": [
+          "group"
+        ]
+      },
+      "layout.width": {
+        "canonical": "layout.width",
+        "contexts": [
+          "group"
+        ]
+      },
+      "padding": {
+        "canonical": "padding",
+        "contexts": [
+          "group"
+        ]
+      },
+      "repeatHeader": {
+        "canonical": "repeatHeader",
+        "contexts": [
+          "group"
+        ]
+      },
+      "row.cantSplit": {
+        "canonical": "row.cantSplit",
+        "contexts": [
+          "group"
+        ]
+      },
+      "row.height": {
+        "canonical": "row.height",
+        "contexts": [
+          "group"
+        ]
+      },
+      "row.heightRule": {
+        "canonical": "row.heightRule",
+        "contexts": [
+          "group"
+        ]
+      },
+      "row.vAlign": {
+        "canonical": "row.vAlign",
+        "contexts": [
+          "group"
+        ]
+      },
+      "style": {
+        "canonical": "style",
+        "contexts": [
+          "group"
+        ]
+      }
+    }
+  },
+  "group_aliases": {
+    "list": {
+      "level": "nest"
+    }
+  },
+  "group_keyword": {
+    "font": "font",
+    "formula": "formula",
+    "heading": "heading",
+    "image": "image",
+    "list": "list",
+    "numbering": "numbering",
+    "paragraph": "paragraph",
+    "shape": "shape",
+    "table": "table"
+  },
+  "groups": [
+    "font",
+    "paragraph",
+    "heading",
+    "list",
+    "image",
+    "shape",
+    "formula",
+    "numbering",
+    "table"
+  ]
+}

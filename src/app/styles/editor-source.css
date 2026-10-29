@@ -1,0 +1,118 @@
+.prosemirror-host .ProseMirror-selectednode {
+  outline: 2px solid var(--md-editor-accent);
+}
+
+.source-editor {
+  display: block;
+  width: 100%;
+  height: 100%;
+  zoom: var(--md-editor-zoom);
+  min-width: 0;
+  min-height: 0;
+  background: transparent;
+  color: var(--md-editor-fg);
+  font-family: var(--md-editor-font-mono);
+  font-size: 14px;
+  line-height: 1.75;
+}
+
+.source-editor {
+  grid-column: 1;
+  max-width: calc(var(--md-editor-content-width-percent) * 1cqw);
+  margin: 0 auto;
+  overflow: visible;
+  /*
+   * 行号列：固定宽度，独占正文左侧的一列。
+   * - offset：gutter 左侧留白，使数字列右缘正好落在正文左缘；
+   * - overflow：正文可用宽度不足一列时正文右移的量，从正文宽度里扣掉，
+   *   保证右缘不越过原位置。
+   */
+  --source-line-number-column: 44px;
+  --source-line-number-offset: max(
+    0px,
+    calc(var(--md-editor-source-viewport-inset-left, 0px) - var(--source-line-number-column))
+  );
+  --source-line-number-overflow: max(
+    0px,
+    calc(var(--source-line-number-column) - var(--md-editor-source-viewport-inset-left, 0px))
+  );
+}
+
+/* 正文仍由 document-layout 定宽；只把 CodeMirror 滚动视口延伸到面板边缘。 */
+.source-editor .cm-scroller {
+  position: absolute;
+  left: calc(-1 * var(--md-editor-source-viewport-inset-left, 0px));
+  top: calc(-1 * var(--md-editor-source-viewport-inset-top, 0px));
+  width: var(--md-editor-source-viewport-width, 100%);
+  height: var(--md-editor-source-viewport-height, 100%);
+  scrollbar-gutter: stable both-edges;
+}
+
+.source-editor .cm-content {
+  box-sizing: border-box;
+  flex-grow: 0;
+  /* 正文起点由 gutter 的位次决定；宽度扣掉「列宽超出左侧留白」的部分。 */
+  width: calc(var(--md-editor-source-content-width, 100%) - var(--source-line-number-overflow));
+  margin-left: 0;
+  min-width: 0;
+  min-height: max(
+    var(--md-editor-content-min-height, 0px),
+    var(--md-editor-split-content-min-height, 0px)
+  );
+  padding-top: var(--md-editor-source-frame-padding-top, 0px);
+  padding-bottom: calc(
+    var(--md-editor-source-frame-padding-bottom, 0px) + var(--md-editor-scroll-past-end-space, 0px)
+  );
+  color: var(--md-editor-fg);
+}
+
+.source-editor .cm-line {
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/*
+ * 源码行号列：独立于正文流，数字位数变化只影响列内文字。
+ * 空行与指令行不生成元素，因此不会出现「这一行有列、下一行没列」的错位。
+ */
+.source-editor .cm-gutters {
+  position: static;
+  margin-left: var(--source-line-number-offset);
+  background: transparent;
+  border: 0;
+  color: var(--md-editor-muted-fg);
+  font-family: var(--md-editor-font-mono);
+  user-select: none;
+  pointer-events: none;
+}
+
+.source-editor .cm-gutter.cm-source-line-numbers {
+  flex-shrink: 0;
+  width: var(--source-line-number-column);
+  min-width: var(--source-line-number-column);
+  overflow: hidden;
+}
+
+.source-editor .cm-source-line-numbers .cm-gutterElement {
+  box-sizing: border-box;
+  width: 100%;
+  /* 数字紧贴正文左缘：列内只留 6px，去掉折叠 gutter 后行号与正文只隔这一小段。 */
+  padding: 0 6px 0 0;
+  color: var(--md-editor-muted-fg);
+  font-size: inherit;
+  font-variant-numeric: tabular-nums;
+  line-height: inherit;
+  text-align: right;
+  white-space: nowrap;
+  opacity: 0.55;
+}
+
+.source-block-alignment-spacer,
+.semantic-block-alignment-spacer {
+  display: block;
+  width: 1px;
+  min-height: 0;
+  pointer-events: none;
+  user-select: none;
+}
