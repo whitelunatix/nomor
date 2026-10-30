@@ -5,6 +5,7 @@ import {
   type IParagraphOptions, type IRunOptions, type INumberingOptions, type ParagraphChild,
 } from 'docx';
 import { normalizeLinkHref } from '../../../lib/editor-core/link';
+import { textColorToHex } from '../../../lib/editor-core/textColor';
 import { WORD_CONTENT_HEIGHT_PX, WORD_CONTENT_WIDTH_PX, type WordDocument, type WordNode } from './protocol';
 
 const PAGE_WIDTH = 9638; // 170 mm in twips
@@ -83,9 +84,11 @@ export async function buildWordDocument(input: WordDocument): Promise<ArrayBuffe
       if (node.type === 'mermaid_block') text = str(node, 'code');
       if (node.type.startsWith('comment_')) text = `[${input.labels.comment}: ${str(node, 'content')}]`;
       const marks = new Set(node.marks?.map((mark) => mark.type));
+      const textColor = node.marks?.find((mark) => mark.type === 'text_color')?.attrs?.color;
       const style: IRunOptions = {
         text, bold: marks.has('strong'), italics: marks.has('em'), strike: marks.has('strikethrough'),
         underline: marks.has('underline') ? { type: UnderlineType.SINGLE } : undefined,
+        color: textColorToHex(textColor) ?? undefined,
         highlight: marks.has('highlight') ? 'yellow' : undefined,
         superScript: marks.has('superscript'),
         subScript: marks.has('subscript'),

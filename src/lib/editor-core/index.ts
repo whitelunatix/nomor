@@ -7,6 +7,7 @@ export {
   setImageLoader,
 } from './createEditorCore';
 export { DIAGRAM_TEMPLATES,  isDiagramType } from './diagramTemplates';
+export { TEXT_COLOR_PRESETS } from './textColor';
 export type { DiagramTemplate, DiagramType } from './diagramTemplates';
 export type {
   DocxMetaActivateEvent,

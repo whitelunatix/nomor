@@ -1,5 +1,6 @@
 import type { MermaidThemeDefinition } from '../../../lib/theme/types';
 import type { TypographyOptions } from '../../../lib/typography/types';
+import type { PdfLayout } from '../../../lib/export/pdfLayout';
 
 /** 导出只持有值快照，不保留编辑器、组件回调或旧 DOM。 */
 export interface ExportAppearance {
@@ -25,6 +26,8 @@ export interface ExportSnapshot {
 
 export interface ExportTaskOptions {
   signal?: AbortSignal;
+  /** 仅 PDF 导出使用；缺省时使用 A4 纵向默认排版。 */
+  pdfLayout?: PdfLayout;
 }
 
 export function throwIfExportAborted(signal?: AbortSignal): void {

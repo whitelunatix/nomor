@@ -198,6 +198,11 @@ describe('markdown serialization', () => {
     expect(serializeMarkdown(parseMarkdown(input))).toBe(input);
   });
 
+  it('round trips text color spans', () => {
+    const input = '前<span style="color: #e11d48">红</span>后';
+    expect(serializeMarkdown(parseMarkdown(input))).toBe(input);
+  });
+
   it('preserves inline marks inside footnote definitions', () => {
     const input = '正文[^1]\n\n[^1]: **重点** [链接](https://example.com) `code`';
 
@@ -408,6 +413,15 @@ describe('markdown serialization', () => {
     expect(doc.child(0).type.name).toBe('html_block');
     expect(doc.child(1).type.name).toBe('comment_block');
     expect(serializeMarkdown(doc).trim()).toBe('<section>HTML</section>\n\n<!--\n注释\n-->');
+  });
+
+  it('keeps manual page break HTML blocks stable across round trips', () => {
+    const input = '正文\n\n<div class="nomo-page-break"></div>\n\n后文';
+    const doc = parseMarkdown(input);
+
+    expect(doc.child(1).type.name).toBe('html_block');
+    expect(doc.child(1).attrs.class).toBe('nomo-page-break');
+    expect(serializeMarkdown(doc).trim()).toBe(input);
   });
 
   it('still reserves toc comments for toc_block parsing', () => {

@@ -12,6 +12,7 @@ const storageMock = vi.hoisted(() => ({
 
 vi.mock('../../lib/desktop/tauriStorage', () => storageMock);
 
+import { PDF_LAYOUT_MAX_TEMPLATE_LENGTH } from '../../lib/export/pdfLayout';
 import {
   DEFAULT_APP_PREFERENCES,
   applyZoomSetting,
@@ -21,6 +22,7 @@ import {
   loadPersistedImageSettings,
   normalizeAppPreferences,
   normalizeImageSettings,
+  pdfLayoutFromPreferences,
   saveAppPreferences,
 } from './settings';
 
@@ -355,6 +357,33 @@ describe('settings', () => {
     expect(normalized.shortcutPreferences['toggle-source']).toBe('Ctrl+Alt+E');
     expect(normalized.imageHandlingSettings.defaultImageWidth).toBe('100%');
     expect(normalized.imageHandlingSettings.defaultImageAlign).toBe('center');
+  });
+
+  it('normalizes PDF layout preferences and maps them to export options', () => {
+    const longFooter = 'x'.repeat(PDF_LAYOUT_MAX_TEMPLATE_LENGTH + 20);
+    const normalized = normalizeAppPreferences({
+      pdfPaperSize: 'A2' as never,
+      pdfOrientation: 'landscape',
+      pdfMarginTop: 80,
+      pdfMarginRight: -5,
+      pdfHeaderTemplate: '{title}',
+      pdfFooterTemplate: longFooter,
+      pdfPageBreakBeforeH1: true,
+    });
+
+    expect(normalized.pdfPaperSize).toBe('A4');
+    expect(normalized.pdfOrientation).toBe('landscape');
+    expect(normalized.pdfMarginTop).toBe(50);
+    expect(normalized.pdfMarginRight).toBe(0);
+    expect(normalized.pdfFooterTemplate).toHaveLength(PDF_LAYOUT_MAX_TEMPLATE_LENGTH);
+    expect(pdfLayoutFromPreferences(normalized)).toEqual({
+      paperSize: 'A4',
+      orientation: 'landscape',
+      margins: { top: 50, right: 0, bottom: 20, left: 20 },
+      headerTemplate: '{title}',
+      footerTemplate: 'x'.repeat(PDF_LAYOUT_MAX_TEMPLATE_LENGTH),
+      pageBreakBeforeH1: true,
+    });
   });
 
   it('falls back to system interface language for invalid preference values', () => {

@@ -194,6 +194,7 @@
   export let saveMarkdownFile: (saveAs?: boolean) => void;
   export let runCommand: (command: EditorCommand) => void;
   export let pendingInlineMarks: InlinePendingMarks;
+  export let activeTextColor: string | null = null;
   export let formatPainterActive = false;
   export let toggleFormatPainter: () => void = () => undefined;
   export let mathInlineInsertionDisabled = true;
@@ -557,6 +558,7 @@
                   {toolbarShortcut}
                   {runCommand}
                   {pendingInlineMarks}
+                  {activeTextColor}
                   {formatPainterActive}
                   {toggleFormatPainter}
                   {mathInlineInsertionDisabled}

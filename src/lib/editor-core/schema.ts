@@ -5,6 +5,7 @@ import { calloutNodeSpec } from './callout/calloutSchema';
 import { detailsNodes } from './details/detailsSchema';
 import { createLinkAttrs } from './link';
 import { createHtmlAnchorAttrs } from './html/htmlAnchor';
+import { readTextColorFromStyle } from './textColor';
 import { t } from '../../app/i18n';
 
 export type TableColumnAlignment = 'left' | 'center' | 'right';
@@ -629,6 +630,22 @@ export const schema = new Schema({
         parseDOM: [{ tag: 'mark' }],
         toDOM() {
           return ['mark', 0];
+        },
+      },
+      /** 文字颜色保存为行内 `<span style="color: …">`，与常见 Markdown HTML 写法兼容。 */
+      text_color: {
+        attrs: { color: {} },
+        parseDOM: [
+          {
+            tag: 'span[style]',
+            getAttrs: (dom: HTMLElement) => {
+              const color = readTextColorFromStyle(dom.getAttribute('style'));
+              return color ? { color } : false;
+            },
+          },
+        ],
+        toDOM(mark) {
+          return ['span', { style: `color: ${String(mark.attrs.color)}` }, 0];
         },
       },
     })

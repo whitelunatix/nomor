@@ -256,13 +256,22 @@ fn configure_print_settings(
 }
 
 fn paper_size_inches(paper_size: Option<&str>) -> (f64, f64) {
-    match paper_size {
-        Some(value) if value.eq_ignore_ascii_case("letter") => (8.5, 11.0),
-        Some(value) if !value.eq_ignore_ascii_case("a4") => {
+    let (width, height) = paper_size_millimeters(paper_size);
+    (width / MILLIMETERS_PER_INCH, height / MILLIMETERS_PER_INCH)
+}
+
+fn paper_size_millimeters(paper_size: Option<&str>) -> (f64, f64) {
+    match paper_size.map(str::to_ascii_uppercase).as_deref() {
+        Some("A4") | None => (210.0, 297.0),
+        Some("A3") => (297.0, 420.0),
+        Some("A5") => (148.0, 210.0),
+        Some("B5") => (176.0, 250.0),
+        Some("LETTER") => (215.9, 279.4),
+        Some("LEGAL") => (215.9, 355.6),
+        Some(value) => {
             crate::app_logger::warn("Export", &format!("暂不支持的纸张大小：{value}，使用 A4"));
-            (210.0 / MILLIMETERS_PER_INCH, 297.0 / MILLIMETERS_PER_INCH)
+            (210.0, 297.0)
         }
-        _ => (210.0 / MILLIMETERS_PER_INCH, 297.0 / MILLIMETERS_PER_INCH),
     }
 }
 

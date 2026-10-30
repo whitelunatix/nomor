@@ -702,7 +702,7 @@
   --toolbar-scroll-shadow-right: color-mix(in srgb, var(--md-editor-fg) 14%, transparent);
 }
 
-.toolbar-actions-scroll:has(.table-picker-popover, .diagram-picker-popover) {
+.toolbar-actions-scroll:has(.table-picker-popover, .diagram-picker-popover, .text-color-popover) {
   z-index: 2;
   overflow: visible;
   --toolbar-scroll-shadow-left: transparent;
@@ -951,6 +951,91 @@
   color: var(--md-editor-muted-fg);
   font-size: var(--md-editor-ui-font-size-sm);
   font-weight: 700;
+}
+
+/* 文字颜色：入口按钮下方保留一条当前颜色指示线，色板与自定义取色共用同一个弹层。 */
+.diagram-picker-anchor > button {
+  position: relative;
+}
+
+.text-color-indicator {
+  position: absolute;
+  right: 6px;
+  bottom: 3px;
+  left: 6px;
+  height: 3px;
+  border-radius: 2px;
+  pointer-events: none;
+}
+
+.text-color-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  z-index: 40;
+  width: max-content;
+  padding: 8px 10px 10px;
+  border: 1px solid var(--md-editor-border);
+  border-radius: var(--md-editor-radius-md);
+  background: var(--md-editor-surface);
+  box-shadow: var(--md-editor-shadow);
+  animation: table-picker-in 160ms ease-out;
+}
+
+.text-color-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 24px);
+  gap: 7px;
+  padding: 0 2px 8px;
+}
+
+.toolbar .text-color-swatch {
+  width: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--md-editor-fg) 18%, transparent);
+  border-radius: 50%;
+  background: var(--swatch-color);
+}
+
+.toolbar .text-color-swatch:hover {
+  background: var(--swatch-color);
+  transform: scale(1.08);
+}
+
+.toolbar .text-color-swatch.active {
+  box-shadow:
+    0 0 0 2px var(--md-editor-surface),
+    0 0 0 4px var(--md-editor-accent);
+}
+
+.text-color-custom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 2px 2px 8px;
+  color: var(--md-editor-muted-fg);
+  font-size: var(--md-editor-ui-font-size-sm);
+}
+
+.text-color-custom input[type='color'] {
+  width: 40px;
+  height: 24px;
+  padding: 1px;
+  border: 1px solid var(--md-editor-border);
+  border-radius: var(--md-editor-radius-sm);
+  background: var(--md-editor-bg);
+  cursor: pointer;
+}
+
+.toolbar .text-color-clear {
+  width: 100%;
+  min-height: var(--md-editor-control-height-sm);
+  padding: 4px 8px;
+  color: var(--md-editor-fg);
+  font-size: var(--md-editor-ui-font-size-sm);
 }
 
 .toolbar .diagram-picker-popover button {

@@ -2,6 +2,12 @@ import { Fragment, Mark, type Node as ProseMirrorNode } from 'prosemirror-model'
 import type Token from 'markdown-it/lib/token.mjs';
 import { schema } from './schema';
 import { createMarkdownTokenizer, inlineTokenSourceRange } from './markdownTokenizer';
+import {
+  isTextColorCloseTag,
+  parseTextColorOpenTag,
+  textColorOpenTag,
+  textColorCloseTag,
+} from './textColor';
 
 export type InlineFormatName =
   | 'strong'
@@ -10,6 +16,7 @@ export type InlineFormatName =
   | 'strikethrough'
   | 'underline'
   | 'highlight'
+  | 'text_color'
   | 'superscript'
   | 'subscript'
   | 'kbd';
@@ -23,6 +30,8 @@ export interface InlineSourceSpan {
   openTo: number;
   closeFrom: number;
   closeTo: number;
+  /** 需要携带属性的格式（目前只有 text_color）在此保存 Mark 属性。 */
+  attrs?: { color?: string };
 }
 
 export interface InlineSourceAnalysis {
@@ -41,6 +50,7 @@ const formatNames = new Set<InlineFormatName>([
   'strikethrough',
   'underline',
   'highlight',
+  'text_color',
   'superscript',
   'subscript',
   'kbd',
@@ -90,7 +100,11 @@ export function isInlineSourceBlock(node: ProseMirrorNode): boolean {
 export function inlineFormatDelimiters(
   type: InlineFormatName,
   text = '',
+  attrs: { color?: string } = {},
 ): { open: string; close: string } {
+  if (type === 'text_color') {
+    return { open: textColorOpenTag(attrs.color ?? '#000000'), close: textColorCloseTag() };
+  }
   if (type === 'code') {
     const width = Math.max(0, ...(text.match(/`+/g) ?? []).map((run) => run.length)) + 1;
     const fence = '`'.repeat(width);
@@ -102,7 +116,7 @@ export function inlineFormatDelimiters(
     const tag = type === 'superscript' ? 'sup' : 'sub';
     return { open: `<${tag}>`, close: `</${tag}>` };
   }
-  const pair: Record<Exclude<InlineFormatName, 'code'>, [string, string]> = {
+  const pair: Record<Exclude<InlineFormatName, 'code' | 'text_color'>, [string, string]> = {
     strong: ['**', '**'],
     em: ['*', '*'],
     strikethrough: ['~~', '~~'],
@@ -174,6 +188,7 @@ export function analyzeInlineSource(block: ProseMirrorNode): InlineSourceAnalysi
         openTo: openLast + 1,
         closeFrom,
         closeTo: closeLast + 1,
+        ...(span.attrs ? { attrs: span.attrs } : {}),
       },
     ];
   });
@@ -210,7 +225,13 @@ export function analyzeInlineSourceText(source: string): InlineSourceAnalysis {
 function analyzeSource(source: string, syntaxSource: string): InlineSourceAnalysis {
   const tokens = tokenizer.parseInline(syntaxSource, {})[0]?.children ?? [];
   const spans: InlineSourceSpan[] = [];
-  const stack: Array<{ type: InlineFormatName; from: number; to: number; tag?: string }> = [];
+  const stack: Array<{
+    type: InlineFormatName;
+    from: number;
+    to: number;
+    tag?: string;
+    attrs?: { color?: string };
+  }> = [];
   const replacements: Replacement[] = [];
   for (const token of tokens) {
     const range = inlineTokenSourceRange(token);
@@ -276,6 +297,24 @@ function analyzeSource(source: string, syntaxSource: string): InlineSourceAnalys
     if (token.type === 'html_inline') {
       const match = /^<(\/)?([a-z][\w-]*)(?:\s[^>]*)?>$/i.exec(token.content);
       const tag = match?.[2].toLowerCase();
+      // span 只有带 color 样式时才作为文字颜色格式，其余 span 保持可见原文。
+      if (tag === 'span' && !/\/>$/.test(token.content)) {
+        if (isTextColorCloseTag(token.content)) {
+          closeSpan(stack, spans, 'text_color', range.from, range.to, 'span');
+        } else {
+          const color = parseTextColorOpenTag(token.content);
+          if (color) {
+            stack.push({
+              type: 'text_color',
+              from: range.from,
+              to: range.to,
+              tag: 'span',
+              attrs: { color },
+            });
+          }
+        }
+        continue;
+      }
       const htmlType = tag ? htmlFormats[tag] : undefined;
       if (!match || !htmlType || /\/>$/.test(token.content)) continue;
       if (!match[1]) stack.push({ type: htmlType, from: range.from, to: range.to, tag });
@@ -322,7 +361,13 @@ function analyzeSource(source: string, syntaxSource: string): InlineSourceAnalys
 }
 
 function closeSpan(
-  stack: Array<{ type: InlineFormatName; from: number; to: number; tag?: string }>,
+  stack: Array<{
+    type: InlineFormatName;
+    from: number;
+    to: number;
+    tag?: string;
+    attrs?: { color?: string };
+  }>,
   spans: InlineSourceSpan[],
   type: InlineFormatName,
   from: number,
@@ -342,6 +387,7 @@ function closeSpan(
     openTo: opening.to,
     closeFrom: from,
     closeTo: to,
+    ...(opening.attrs ? { attrs: opening.attrs } : {}),
   });
 }
 
@@ -428,7 +474,12 @@ function materializeSourceNode(
   const children: ProseMirrorNode[] = [];
   const sourceMark = schema.marks.inline_source.create();
   let output = 0;
-  let active: Array<{ type: InlineFormatName; close: string; marks: readonly Mark[] }> = [];
+  let active: Array<{
+    type: InlineFormatName;
+    attrs?: { color?: string };
+    close: string;
+    marks: readonly Mark[];
+  }> = [];
   const append = (text: string, marks: readonly Mark[] = []) => {
     if (text) {
       children.push(
@@ -452,18 +503,21 @@ function materializeSourceNode(
   };
   doc.forEach((child, offset, index) => {
     beforeInsert(offset);
-    const desired = child.isText
+    const desired: Array<{ type: InlineFormatName; attrs?: { color?: string } }> = child.isText
       ? child.marks
           .filter((mark) => formatNames.has(mark.type.name as InlineFormatName))
-          .map((mark) => mark.type.name as InlineFormatName)
+          .map((mark) => mark.type.name === 'text_color'
+            ? { type: 'text_color' as const, attrs: { color: String(mark.attrs.color) } }
+            : { type: mark.type.name as InlineFormatName })
           // 字面代码必须处于最内层，不能把外层格式的定界符吞进正文。
-          .sort((left, right) => Number(left === 'code') - Number(right === 'code'))
+          .sort((left, right) => Number(left.type === 'code') - Number(right.type === 'code'))
       : [];
     const linkMarks = child.marks.filter((mark) => mark.type.name === 'link');
     let common = 0;
     while (
       common < active.length &&
-      active[common].type === desired[common] &&
+      active[common].type === desired[common]?.type &&
+      active[common].attrs?.color === desired[common]?.attrs?.color &&
       (active[common].type !== 'code' || Mark.sameSet(active[common].marks, linkMarks))
     )
       common++;
@@ -471,14 +525,17 @@ function materializeSourceNode(
       const closing = active.pop()!;
       append(closing.close, closing.marks);
     }
-    for (const type of desired.slice(common)) {
+    for (const format of desired.slice(common)) {
+      const type = format.type;
       let content = child.textContent;
       let next = index + 1;
       for (
         ;
         next < doc.childCount &&
         doc.child(next).isText &&
-        doc.child(next).marks.some((mark) => mark.type.name === type) &&
+        doc.child(next).marks.some((mark) =>
+          mark.type.name === type &&
+          (type !== 'text_color' || String(mark.attrs.color) === format.attrs?.color)) &&
         (type !== 'code' ||
           Mark.sameSet(
             linkMarks,
@@ -487,7 +544,7 @@ function materializeSourceNode(
         next++
       )
         content += doc.child(next).textContent;
-      let pair = inlineFormatDelimiters(type, content);
+      let pair = inlineFormatDelimiters(type, content, format.attrs);
       if (type === 'strong' || type === 'em' || type === 'strikethrough') {
         const before = index > 0 ? doc.child(index - 1).textContent.slice(-1) : '';
         const after = next < doc.childCount ? doc.child(next).textContent.slice(0, 1) : '';
@@ -504,12 +561,12 @@ function materializeSourceNode(
       }
       const delimiterMarks = type === 'code' ? linkMarks : [];
       append(pair.open, delimiterMarks);
-      active.push({ type, close: pair.close, marks: delimiterMarks });
+      active.push({ type, attrs: format.attrs, close: pair.close, marks: delimiterMarks });
     }
     afterInsert(offset);
     if (child.isText) {
       const raw = child.text!;
-      const literal = !isInlineSourceText(child) && !desired.includes('code');
+      const literal = !isInlineSourceText(child) && !desired.some((format) => format.type === 'code');
       if (maps) {
         const escaped = literal
           ? new Set(
@@ -605,7 +662,7 @@ export function projectInlineSourceWithMapping(doc: ProseMirrorNode): {
         );
         for (const span of analysis.spans) {
           if (original >= span.from && original < span.to)
-            marks = schema.marks[span.type].create().addToSet(marks) as Mark[];
+            marks = schema.marks[span.type].create(span.attrs).addToSet(marks) as Mark[];
         }
         const value = analysis.visibleText[i];
         const previous = result[result.length - 1];

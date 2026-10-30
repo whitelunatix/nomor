@@ -410,6 +410,12 @@ fn build_paragraph_menu<R: Runtime>(app: &AppHandle<R>) -> Result<tauri::menu::S
         )?)
         .item(&menu_item(
             app,
+            "menu-page-break",
+            tr(locale, "menu_page_break"),
+            None,
+        )?)
+        .item(&menu_item(
+            app,
             "menu-content-directory",
             tr(locale, "menu_toc"),
             None,

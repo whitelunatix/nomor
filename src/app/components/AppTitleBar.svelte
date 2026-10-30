@@ -799,6 +799,10 @@
                   >{t.horizontalRule()} <span class="shortcut">Ctrl + Shift + H</span></button
                 >
                 <button
+                  on:click={() => finish(() => runCommand({ type: 'insertPageBreak' }), 'paragraph')}
+                  >{t.pageBreak()}</button
+                >
+                <button
                   on:click={() => finish(() => runCommand({ type: 'insertToc' }), 'paragraph')}
                   >{t.toc()}</button
                 >

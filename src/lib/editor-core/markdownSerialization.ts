@@ -480,6 +480,16 @@ const tableMarkdownSerializer = new MarkdownSerializer(
       mixable: true,
       expelEnclosingWhitespace: true,
     },
+    text_color: {
+      open(_state, mark) {
+        return `<span style="color: ${String(mark.attrs.color)}">`;
+      },
+      close() {
+        return '</span>';
+      },
+      mixable: true,
+      expelEnclosingWhitespace: true,
+    },
     link: {
       open(_state, mark, parent, index) {
         if (mark.attrs.html) return serializeHtmlAnchorOpen(mark.attrs);

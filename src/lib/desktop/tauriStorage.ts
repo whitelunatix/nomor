@@ -156,6 +156,10 @@ interface ExportPdfInput {
   margins?: { top: number; right: number; bottom: number; left: number };
   print_background?: boolean;
   outline?: Array<{ marker_uri: string; title: string; level: number }>;
+  header_template?: string;
+  footer_template?: string;
+  title?: string;
+  date?: string;
 }
 
 interface ExportResultPayload {

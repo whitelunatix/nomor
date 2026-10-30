@@ -117,6 +117,8 @@ export interface EditorChangeEvent {
   readonly: boolean;
   reason: 'content-pending' | 'content-sync' | string;
   pendingInlineMarks: InlinePendingMarks;
+  /** 当前选区统一的文字颜色，用于工具栏色板选中态。 */
+  activeTextColor: string | null;
 }
 
 export interface EditorImageDeletionEvent {
@@ -164,6 +166,9 @@ export type EditorCommand =
   | { type: 'toggleStrikethrough' }
   | { type: 'toggleUnderline' }
   | { type: 'toggleHighlight' }
+  | { type: 'setTextColor'; color: string }
+  | { type: 'clearTextColor' }
+  | { type: 'toggleTextColor'; color: string }
   | { type: 'toggleSuperscript' }
   | { type: 'toggleSubscript' }
   | { type: 'clearInlineStyles' }
@@ -221,6 +226,8 @@ export type EditorCommand =
   | { type: 'redo' }
   | { type: 'formatDocument' }
   | { type: 'insertHorizontalRule' }
+  /** 插入 PDF 导出用的手动分页符（`<div class="nomo-page-break"></div>`）。 */
+  | { type: 'insertPageBreak' }
   | {
       type: 'moveOutlineSection';
       sourceIndex: number;

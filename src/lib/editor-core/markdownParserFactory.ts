@@ -22,6 +22,7 @@ import {
   materializeInlineSource,
 } from './InlineSourceCodec';
 import { inlineTokenSourceRange, parseHtmlAttributes } from './markdownTokenizer';
+import { parseTextColorOpenTag } from './textColor';
 import { parseDetailsHtml } from './details/detailsSchema';
 
 export type HtmlMarkdownParseState = {
@@ -178,7 +179,7 @@ export function createSemanticMarkdownParser(markdownIt: MarkdownIt): SemanticMa
     html_inline: { ignore: true },
   }) as MarkdownParserWithTokenHandlers;
 
-  let htmlInlineStack: Array<{ tag: string; markName: string }> = [];
+  let htmlInlineStack: Array<{ tag: string; markName: string; mark?: ProseMirrorMark }> = [];
   const resetInlineStack = () => {
     htmlInlineStack = [];
   };
@@ -311,9 +312,24 @@ export function createSemanticMarkdownParser(markdownIt: MarkdownIt): SemanticMa
         if (idx >= 0) {
           while (htmlInlineStack.length > idx) {
             const top = htmlInlineStack.pop()!;
-            state.closeMark(schema.marks[top.markName]);
+            if (top.mark) state.closeMark(top.mark);
+            else if (top.markName) state.closeMark(schema.marks[top.markName]!);
           }
         } else {
+          state.addText(content);
+        }
+        return;
+      }
+
+      if (tag === 'span') {
+        const color = parseTextColorOpenTag(content);
+        if (color) {
+          const mark = schema.marks.text_color.create({ color });
+          htmlInlineStack.push({ tag, markName: 'text_color', mark });
+          state.openMark(mark);
+        } else {
+          // 普通 span 仍是可表示的行内标签，但关闭时不能误关外层颜色。
+          htmlInlineStack.push({ tag, markName: '' });
           state.addText(content);
         }
         return;

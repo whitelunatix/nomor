@@ -1,4 +1,4 @@
-import { isDiagramType, type EditorCommand } from '../../lib/editor-core';
+import { isDiagramType, TEXT_COLOR_PRESETS, type EditorCommand } from '../../lib/editor-core';
 import { resetOutlinePanelPosition } from './outlinePanelPosition';
 import type { EditorViewMode } from '../types';
 import {
@@ -149,6 +149,8 @@ export function executeDesktopCommand(command: string, handlers: AppCommandHandl
     handlers.runCommand({ type: 'insertFootnote' });
   } else if (command === 'menu-horizontal-rule') {
     handlers.runCommand({ type: 'insertHorizontalRule' });
+  } else if (command === 'menu-page-break') {
+    handlers.runCommand({ type: 'insertPageBreak' });
   } else if (command === 'menu-content-directory') {
     handlers.runCommand({ type: 'insertToc' });
   } else if (command === 'menu-yaml-front-matter') {
@@ -161,6 +163,8 @@ export function executeDesktopCommand(command: string, handlers: AppCommandHandl
     handlers.runCommand({ type: 'toggleStrikethrough' });
   } else if (command === 'menu-highlight') {
     handlers.runCommand({ type: 'toggleHighlight' });
+  } else if (command === 'menu-text-color') {
+    handlers.runCommand({ type: 'toggleTextColor', color: TEXT_COLOR_PRESETS[0] });
   } else if (command === 'menu-comment') {
     handlers.runCommand({ type: 'insertCommentInline' });
   } else if (command === 'menu-comment-block') {

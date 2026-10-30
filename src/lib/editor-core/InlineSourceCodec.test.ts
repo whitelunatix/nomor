@@ -27,6 +27,33 @@ describe('inline source codec', () => {
     expect(projected.firstChild!.child(1).marks[0].type.name).toBe('superscript');
   });
 
+  it('projects and materializes text color spans', () => {
+    const source = '前<span style="color: #e11d48">红</span>后';
+    const analysis = analyzeInlineSourceText(source);
+    const span = analysis.spans.find((candidate) => candidate.type === 'text_color');
+    expect(span?.attrs).toEqual({ color: '#e11d48' });
+    expect(analysis.visibleText).toBe('前红后');
+
+    const doc = parseMarkdown(source);
+    const projected = projectInlineSource(doc);
+    const colors: string[] = [];
+    projected.descendants((node) => {
+      if (!node.isText) return;
+      const mark = node.marks.find((candidate) => candidate.type.name === 'text_color');
+      if (mark) colors.push(String(mark.attrs.color));
+    });
+    expect(colors).toEqual(['#e11d48']);
+    expect(serializeMarkdown(doc)).toBe(source);
+
+    const semantic = schema.nodes.paragraph.create(
+      null,
+      schema.text('红', [schema.marks.text_color.create({ color: '#2563eb' })]),
+    );
+    expect(materializeInlineSource(semantic).textContent).toContain(
+      '<span style="color: #2563eb">红</span>',
+    );
+  });
+
   it('supports escaped whitespace and HTML scripts in editable blocks', () => {
     expect(analyzeInlineSourceText('^a\\ b^').visibleText).toBe('a b');
     expect(analyzeInlineSourceText('~a\\~b~').visibleText).toBe('a~b');

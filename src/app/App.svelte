@@ -32,6 +32,7 @@
   import {
     createEditorCore,
     getImageLoader,
+    TEXT_COLOR_PRESETS,
     setCodeBlockDiagramRenderer,
     setCodeBlockMathRenderer,
     setCodeBlockTokenizer,
@@ -195,6 +196,7 @@
     applyZoomSetting,
     loadAppPreferences,
     normalizeAppPreferences,
+    pdfLayoutFromPreferences,
     type AppPreferences,
     type AppPreferencesPatch,
     type CloseWindowBehavior,
@@ -548,6 +550,7 @@
   }
 
   let pendingInlineMarks: InlinePendingMarks = createEmptyPendingInlineMarks();
+  let activeTextColor: string | null = null;
 
   /** 格式刷复制的是行内 mark；与 Word 一样是一次性的，应用后自动取消。 */
   const FORMAT_PAINTER_COMMANDS: Record<InlinePendingMarkName, EditorCommand> = {
@@ -3390,6 +3393,22 @@
             ...commandMenuItem(t.highlight(), { type: 'toggleHighlight' }, 'format'),
             active: pendingInlineMarks.highlight,
           },
+          {
+            label: t.textColor(),
+            icon: 'format',
+            disabled,
+            active: activeTextColor !== null,
+            children: [
+              ...TEXT_COLOR_PRESETS.map((color) => ({
+                label: color,
+                icon: 'format' as const,
+                disabled,
+                action: () => runCommand({ type: 'setTextColor', color }),
+              })),
+              menuSeparator(),
+              commandMenuItem(t.clearTextColor(), { type: 'clearTextColor' }, 'format'),
+            ],
+          },
           menuSeparator(),
           commandMenuItem(t.clearStyle(), { type: 'clearInlineStyles' }, 'format'),
         ],
@@ -3481,6 +3500,7 @@
       commandMenuItem(t.mathBlock(), { type: 'insertMathBlock', tex: 'E = mc^2' }, 'formula'),
       commandMenuItem(t.mermaidDiagram(), { type: 'insertMermaidBlock' }, 'diagram'),
       commandMenuItem(t.horizontalRule(), { type: 'insertHorizontalRule' }, 'separator'),
+      commandMenuItem(t.pageBreak(), { type: 'insertPageBreak' }, 'separator'),
     ];
   }
 
@@ -7140,6 +7160,7 @@
     if (!markdownChanged && event.reason === 'transaction') {
       version = event.version;
       pendingInlineMarks = event.pendingInlineMarks;
+      activeTextColor = event.activeTextColor;
       activeTab.version = version;
       return;
     }
@@ -7162,6 +7183,7 @@
     }
     version = event.version;
     pendingInlineMarks = event.pendingInlineMarks;
+    activeTextColor = event.activeTextColor;
 
     activeTab.dirty = dirty;
     activeTab.version = version;
@@ -7631,7 +7653,13 @@
       if (!snapshot) return;
       if (!snapshot.documentPath && !snapshot.markdown.trim()) { showToast(t.noOpenDocumentForExport(), 2000); return; }
       const { exportHtml, exportPdf } = await import('./services/exportService');
-      const result = await (format === 'html' ? exportHtml : exportPdf)(snapshot, { signal: abort.signal });
+      const pdfLayout = format === 'pdf'
+        ? pdfLayoutFromPreferences(await loadAppPreferences(desktopEnabled))
+        : undefined;
+      const result = await (format === 'html' ? exportHtml : exportPdf)(snapshot, {
+        signal: abort.signal,
+        pdfLayout,
+      });
       if (abort.signal.aborted || result.cancelled) return;
       if (result.success) {
         const message = format === 'html'
@@ -8320,6 +8348,7 @@
   {saveMarkdownFile}
   {runCommand}
   {pendingInlineMarks}
+  {activeTextColor}
   formatPainterActive={formatPainterMarks !== null}
   {toggleFormatPainter}
   {mathInlineInsertionDisabled}

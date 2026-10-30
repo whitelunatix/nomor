@@ -76,7 +76,12 @@ import {
   isInlineSourceComposing,
   getEmptyInlineTemplateFormats,
 } from './plugins/inlineSourceEditing';
-import { toggleInlineSourceFormat, getActiveInlineSourceFormats, replaceInlineSourceCodeText } from './inlineSourceCommands';
+import {
+  toggleInlineSourceFormat,
+  getActiveInlineSourceFormats,
+  getActiveInlineSourceTextColor,
+  replaceInlineSourceCodeText,
+} from './inlineSourceCommands';
 import {
   materializeInlineSource,
   materializeInlineSourceWithMapping,
@@ -1824,6 +1829,7 @@ export class ProseMirrorEditorCore implements EditorCore {
       readonly: this.runtime.readonly,
       reason,
       pendingInlineMarks: this.createPendingInlineMarks(),
+      activeTextColor: this.view ? getActiveInlineSourceTextColor(this.view.state) : null,
     };
   }
 

@@ -3,6 +3,7 @@ import { INLINE_TAG_TO_MARK } from './htmlPolicy';
 import { createLinkAttrs } from '../link';
 import { createHtmlAnchorAttrs } from './htmlAnchor';
 import { readHtmlInlineAtom } from './htmlClassifier';
+import { readTextColorFromStyle } from '../textColor';
 
 type HtmlParseState = {
   openMark(mark: unknown): void;
@@ -51,6 +52,18 @@ function walkDOMFragment(
         state.closeNode();
       }
       continue;
+    }
+
+    if (tag === 'span') {
+      const color = readTextColorFromStyle(el.getAttribute('style'));
+      if (color) {
+        const mark = schema.marks.text_color.create({ color });
+        state.openMark(mark);
+        walkDOMFragment(state, el, schema, mark.addToSet(activeMarks));
+        state.closeMark(mark);
+        for (const outerMark of activeMarks) state.openMark(outerMark);
+        continue;
+      }
     }
 
     const markType = schema.marks[INLINE_TAG_TO_MARK[tag]];

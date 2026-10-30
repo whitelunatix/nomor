@@ -254,14 +254,19 @@ fn configure_print_info(
 }
 
 fn paper_size_points(paper_size: Option<&str>) -> (f64, f64) {
-    match paper_size {
-        Some(value) if value.eq_ignore_ascii_case("letter") => (612.0, 792.0),
-        Some(value) if !value.eq_ignore_ascii_case("a4") => {
+    let (width, height) = match paper_size.map(str::to_ascii_uppercase).as_deref() {
+        Some("A4") | None => (210.0, 297.0),
+        Some("A3") => (297.0, 420.0),
+        Some("A5") => (148.0, 210.0),
+        Some("B5") => (176.0, 250.0),
+        Some("LETTER") => (215.9, 279.4),
+        Some("LEGAL") => (215.9, 355.6),
+        Some(value) => {
             crate::app_logger::warn("Export", &format!("暂不支持的纸张大小：{value}，使用 A4"));
-            (210.0 * POINTS_PER_MILLIMETER, 297.0 * POINTS_PER_MILLIMETER)
+            (210.0, 297.0)
         }
-        _ => (210.0 * POINTS_PER_MILLIMETER, 297.0 * POINTS_PER_MILLIMETER),
-    }
+    };
+    (width * POINTS_PER_MILLIMETER, height * POINTS_PER_MILLIMETER)
 }
 
 fn millimeters_to_points(value: Option<f64>) -> f64 {

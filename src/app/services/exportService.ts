@@ -11,6 +11,11 @@ import katexCss from 'virtual:nomo-katex-css';
 import { captureExportAppearance } from './export/snapshot';
 import { renderExportBody } from './export/render';
 import { throwIfExportAborted, type ExportSnapshot, type ExportAppearance, type ExportTaskOptions } from './export/types';
+import {
+  DEFAULT_PDF_LAYOUT,
+  applyPdfLayout,
+  buildPdfChromePayload,
+} from '../../lib/export/pdfLayout';
 export { inlineLocalImages } from './export/images';
 import { inlineLocalImages } from './export/images';
 
@@ -86,17 +91,19 @@ export async function exportPdf(input: ExportDocumentInput, options: ExportTaskO
       return { success: false, cancelled: true };
     }
 
+    const layout = options.pdfLayout ?? DEFAULT_PDF_LAYOUT;
     const { html, warnings } = await buildExportDocument(input, options);
     throwIfExportAborted(options.signal);
-    const pdfDocument = addPdfOutlineMarkers(html);
+    const pdfDocument = addPdfOutlineMarkers(applyPdfLayout(html, layout));
     const result = await exportPdfFromHtml({
       html_content: pdfDocument.html,
       file_path: filePath,
-      paper_size: 'A4',
-      orientation: 'portrait',
-      margins: { top: 20, right: 20, bottom: 20, left: 20 },
+      paper_size: layout.paperSize,
+      orientation: layout.orientation,
+      margins: layout.margins,
       print_background: true,
       outline: pdfDocument.outline,
+      ...buildPdfChromePayload(layout, { title: input.title, date: formatPdfDate() }),
     });
 
     const mergedWarnings = [...warnings, ...(result.warnings ?? [])];
@@ -104,6 +111,7 @@ export async function exportPdf(input: ExportDocumentInput, options: ExportTaskO
       filePath,
       bytes: result.bytes_written,
       outlineCount: pdfDocument.outline.length,
+      paperSize: layout.paperSize,
       warningCount: mergedWarnings.length,
     });
     return { success: true, filePath, warnings: mergedWarnings };
@@ -171,6 +179,14 @@ export function addPdfOutlineMarkers(html: string): { html: string; outline: Pdf
     html: `<!DOCTYPE html>\n${doc.documentElement.outerHTML}`,
     outline,
   };
+}
+
+/** 页眉页脚的 `{date}` 使用本地日期，避免跨时区导出成前一天。 */
+function formatPdfDate(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
 }
 
 function createPdfOutlineJobId(): string {

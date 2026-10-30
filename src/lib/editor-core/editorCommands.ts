@@ -1,6 +1,12 @@
 import { setBlockType, splitBlockAs, wrapIn } from 'prosemirror-commands';
 import { liftTarget } from 'prosemirror-transform';
-import { appendClearInlineSourceStyles, toggleInlineSourceFormat } from './inlineSourceCommands';
+import {
+  appendClearInlineSourceStyles,
+  clearInlineSourceTextColor,
+  setInlineSourceTextColor,
+  toggleInlineSourceFormat,
+  toggleInlineSourceTextColor,
+} from './inlineSourceCommands';
 import { closeHistory, redo, undo } from 'prosemirror-history';
 import { wrapInList } from 'prosemirror-schema-list';
 import {
@@ -115,6 +121,7 @@ const CLEAR_INLINE_MARK_NAMES = [
   'strikethrough',
   'link',
   'code',
+  'text_color',
 ];
 const CLEAR_INLINE_NODE_NAMES = ['math_inline'];
 
@@ -801,6 +808,12 @@ export function executeEditorCommand(
       return run(toggleInlineSourceFormat('subscript'));
     case 'toggleHighlight':
       return run(toggleInlineSourceFormat('highlight'));
+    case 'setTextColor':
+      return run(setInlineSourceTextColor(command.color));
+    case 'clearTextColor':
+      return run(clearInlineSourceTextColor());
+    case 'toggleTextColor':
+      return run(toggleInlineSourceTextColor(command.color));
     case 'clearInlineStyles':
       return run(clearInlineStyles);
     case 'setHeading':
@@ -1031,6 +1044,8 @@ export function executeEditorCommand(
       return decreaseHeadingLevel(state, dispatch);
     case 'insertHorizontalRule':
       return insertHorizontalRule(view);
+    case 'insertPageBreak':
+      return insertPageBreak(view);
     case 'undo':
       return run(undo);
     case 'redo':
@@ -1702,5 +1717,64 @@ function insertHorizontalRule(view: EditorView): boolean {
   const tr = state.tr.insert(insertPos, [hrNode, emptyParagraph]);
   tr.setSelection(TextSelection.create(tr.doc, insertPos + hrNode.nodeSize + 1));
   dispatch(tr.scrollIntoView());
+  return true;
+}
+
+/**
+ * 插入手动分页符。
+ *
+ * 分页符使用 HTML 块 `<div class="nomo-page-break"></div>` 表示：
+ * Markdown 往返稳定，导出 PDF 时由排版层转换为强制分页，HTML/Word 导出保留为空块。
+ */
+function insertPageBreak(view: EditorView): boolean {
+  const { state, dispatch } = view;
+  const node = schema.nodes.html_block.create({ tag: 'div', class: 'nomo-page-break' });
+  const emptyParagraph = schema.nodes.paragraph.create();
+
+  const insertAfter = (tr: Transaction, position: number) => {
+    tr.insert(position, [node, emptyParagraph]);
+    tr.setSelection(TextSelection.create(tr.doc, position + node.nodeSize + 1));
+    dispatch(closeHistory(tr).scrollIntoView());
+    return true;
+  };
+
+  const { selection } = state;
+  if (selection instanceof NodeSelection) {
+    return insertAfter(state.tr, selection.to);
+  }
+
+  const { $from, empty } = selection;
+  if (
+    empty &&
+    $from.depth === 1 &&
+    $from.parent.type === schema.nodes.paragraph &&
+    $from.parent.content.size === 0
+  ) {
+    const blockStart = $from.before(1);
+    const tr = state.tr.replaceWith(blockStart, $from.after(1), [node, emptyParagraph]);
+    tr.setSelection(TextSelection.create(tr.doc, blockStart + node.nodeSize + 1));
+    dispatch(closeHistory(tr).scrollIntoView());
+    return true;
+  }
+
+  // 在正文中间插入块级节点时，先把当前文本块在光标处拆开，
+  // 再把分页符放到两段之间，保证前后段落都保留原有内容。
+  const tr = state.tr.deleteSelection();
+  const $cursor = tr.selection.$from;
+  if (tr.selection.empty && $cursor.depth === 1 && $cursor.parent.isTextblock) {
+    const splitPos = $cursor.pos;
+    tr.split(splitPos);
+    // 拆分后已经存在后半段，只需把分页符插到两段之间。
+    const insertPos = splitPos + 1;
+    tr.insert(insertPos, node);
+    tr.setSelection(TextSelection.create(tr.doc, insertPos + node.nodeSize + 1));
+    dispatch(closeHistory(tr).scrollIntoView());
+    return true;
+  }
+
+  const insertPos = $cursor.depth >= 1 ? $cursor.after(1) : $cursor.pos;
+  tr.insert(insertPos, [node, emptyParagraph]);
+  tr.setSelection(TextSelection.create(tr.doc, insertPos + node.nodeSize + 1));
+  dispatch(closeHistory(tr).scrollIntoView());
   return true;
 }

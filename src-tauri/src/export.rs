@@ -268,7 +268,7 @@ async fn run_pdf_export(app: AppHandle, input: ExportPdfInput) -> Result<ExportR
     ensure_pdf_export_deadline(timer)?;
 
     let mut warnings = Vec::new();
-    let final_pdf_path = if input.outline.is_empty() {
+    let mut final_pdf_path: &Path = if input.outline.is_empty() {
         &job.raw_pdf_path
     } else {
         match crate::pdf_outline::add_document_outline(
@@ -297,6 +297,37 @@ async fn run_pdf_export(app: AppHandle, input: ExportPdfInput) -> Result<ExportR
             }
         }
     };
+    ensure_pdf_export_deadline(timer)?;
+
+    let chrome_options = crate::pdf_chrome::PdfChromeOptions {
+        header_template: &input.header_template,
+        footer_template: &input.footer_template,
+        title: &input.title,
+        date: &input.date,
+        margins: input.margins.as_ref(),
+    };
+    if chrome_options.is_active() {
+        match crate::pdf_chrome::add_page_chrome(
+            final_pdf_path,
+            &job.chromed_pdf_path,
+            &chrome_options,
+        ) {
+            Ok(()) => {
+                final_pdf_path = &job.chromed_pdf_path;
+                crate::app_logger::info(
+                    "Export",
+                    &format!("PDF 页眉页脚绘制完成：{} ms", timer.elapsed().as_millis()),
+                );
+            }
+            Err(error) => {
+                crate::app_logger::warn(
+                    "Export",
+                    &format!("PDF 页眉页脚绘制失败，保留原始 PDF：{error}"),
+                );
+                warnings.push("PDF 已导出，但未能绘制页眉页脚".to_string());
+            }
+        }
+    }
     ensure_pdf_export_deadline(timer)?;
 
     let bytes =
@@ -337,6 +368,7 @@ struct PdfExportJob {
     html_path: PathBuf,
     raw_pdf_path: PathBuf,
     outlined_pdf_path: PathBuf,
+    chromed_pdf_path: PathBuf,
 }
 
 impl PdfExportJob {
@@ -366,6 +398,7 @@ impl PdfExportJob {
             html_path,
             raw_pdf_path: temp_dir.join("raw.pdf"),
             outlined_pdf_path: temp_dir.join("outlined.pdf"),
+            chromed_pdf_path: temp_dir.join("chromed.pdf"),
             temp_dir,
         })
     }

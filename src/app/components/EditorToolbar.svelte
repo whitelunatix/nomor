@@ -1,6 +1,7 @@
 <script lang="ts">
   import {
     AlignHorizontalSpaceAround,
+    Baseline,
     Bold,
     Braces,
     CheckSquare,
@@ -38,6 +39,7 @@
   import { clickOutside } from '../actions/clickOutside';
   import { typographyRange } from '../actions/typographyRange';
   import { getDiagramTypeLabel, t } from '../i18n';
+  import { TEXT_COLOR_PRESETS } from '../../lib/editor-core/textColor';
 
   export let interfaceLocale: string;
   export let mode: EditorViewMode;
@@ -53,6 +55,7 @@
   export let toolbarShortcut: string;
   export let runCommand: (command: EditorCommand) => void;
   export let pendingInlineMarks: InlinePendingMarks;
+  export let activeTextColor: string | null = null;
   export let formatPainterActive = false;
   export let toggleFormatPainter: () => void = () => undefined;
   export let tablePickerOpen: boolean;
@@ -74,6 +77,17 @@
   let diagramPickerOpen = false;
   let widthPickerOpen = false;
   let mathPickerOpen = false;
+  let textColorPickerOpen = false;
+
+  function applyTextColor(color: string) {
+    runCommand({ type: 'setTextColor', color });
+    textColorPickerOpen = false;
+  }
+
+  function clearTextColor() {
+    runCommand({ type: 'clearTextColor' });
+    textColorPickerOpen = false;
+  }
 
   function trackToolbarScroll(node: HTMLElement) {
     let frameId: number | null = null;
@@ -115,6 +129,7 @@
     mathPickerOpen = false;
     diagramPickerOpen = false;
     widthPickerOpen = false;
+    textColorPickerOpen = false;
   }
 
   function toggleTablePicker() {
@@ -275,6 +290,70 @@
       >
         <Highlighter size={17} />
       </button>
+      <div class="diagram-picker-anchor" use:clickOutside={() => (textColorPickerOpen = false)}>
+        <button
+          title={t.textColor()}
+          aria-label={t.setTextColor()}
+          aria-haspopup="dialog"
+          aria-expanded={textColorPickerOpen}
+          class:active={textColorPickerOpen || activeTextColor !== null}
+          on:mousedown|preventDefault
+          on:click|stopPropagation={() => (textColorPickerOpen = !textColorPickerOpen)}
+        >
+          <Baseline size={17} />
+          {#if activeTextColor}
+            <span class="text-color-indicator" style:background={activeTextColor}></span>
+          {/if}
+        </button>
+        {#if textColorPickerOpen}
+          <div
+            class="text-color-popover"
+            role="dialog"
+            aria-label={t.textColor()}
+            tabindex="-1"
+            on:keydown={(event) => {
+              if (event.key === 'Escape') {
+                event.preventDefault();
+                textColorPickerOpen = false;
+              }
+            }}
+          >
+            <div class="diagram-picker-header">{t.textColor()}</div>
+            <div class="text-color-grid">
+              {#each TEXT_COLOR_PRESETS as color}
+                <button
+                  type="button"
+                  class="text-color-swatch"
+                  class:active={activeTextColor === color}
+                  style:--swatch-color={color}
+                  title={color}
+                  aria-label={color}
+                  aria-pressed={activeTextColor === color}
+                  on:mousedown|preventDefault
+                  on:click={() => applyTextColor(color)}
+                ></button>
+              {/each}
+            </div>
+            <label class="text-color-custom">
+              <span>{t.customTextColor()}</span>
+              <input
+                type="color"
+                value={activeTextColor ?? '#000000'}
+                aria-label={t.customTextColor()}
+                on:change={(event) => applyTextColor(event.currentTarget.value)}
+              />
+            </label>
+            <button
+              type="button"
+              class="text-color-clear"
+              on:mousedown|preventDefault
+              on:click={clearTextColor}
+            >
+              {t.clearTextColor()}
+            </button>
+          </div>
+        {/if}
+      </div>
       <button
         title={t.superscript()}
         aria-label={t.toggleSuperscript()}

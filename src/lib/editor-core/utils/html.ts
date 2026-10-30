@@ -1,5 +1,6 @@
 import { DANGEROUS_TAGS, EDITABLE_BLOCK_TAGS, EDITABLE_INLINE_TAGS } from '../html/htmlPolicy';
 import { normalizeLinkHref } from '../link';
+import { readTextColorFromStyle } from '../textColor';
 
 const FALLBACK_TAGS: ReadonlySet<string> = new Set([
   ...EDITABLE_BLOCK_TAGS,
@@ -62,10 +63,19 @@ export function sanitizeHtml(html: string): string {
 
     for (const attribute of Array.from(element.attributes)) {
       const name = attribute.name;
-      // 属性按标签放行，style、事件、srcdoc、ping 等不能进入最终 widget。
+      // 属性按标签放行，style、事件、srcdoc、ping 等不能进入最终 widget；
+      // span 的 style 是文字颜色的唯一合法载体，只保留规范化后的 color 声明。
+      const styledTextColor = tag === 'span' && name === 'style';
       if (attribute.namespaceURI !== null ||
-          (!FALLBACK_COMMON_ATTRIBUTES.has(name) && !FALLBACK_TAG_ATTRIBUTES[tag]?.includes(name))) {
+          (!styledTextColor && !FALLBACK_COMMON_ATTRIBUTES.has(name) &&
+            !FALLBACK_TAG_ATTRIBUTES[tag]?.includes(name))) {
         element.removeAttributeNode(attribute);
+        continue;
+      }
+      if (styledTextColor) {
+        const color = readTextColorFromStyle(attribute.value);
+        if (color) element.setAttribute('style', `color: ${color}`);
+        else element.removeAttributeNode(attribute);
         continue;
       }
       if (name === 'href' || name === 'src') {

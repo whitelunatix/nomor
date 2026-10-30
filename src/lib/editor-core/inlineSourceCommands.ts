@@ -12,6 +12,7 @@ import {
   getEmptyInlineSourceTemplates,
   removeInlineSourceTemplateOrigin,
 } from './plugins/inlineSourceEditing';
+import { normalizeTextColor } from './textColor';
 
 export type InlineSourceFormat =
   | 'strong'
@@ -22,6 +23,9 @@ export type InlineSourceFormat =
   | 'highlight'
   | 'superscript'
   | 'subscript';
+
+/** 颜色与其它行内格式共用编辑辅助函数，但不参与模板与普通格式开关。 */
+type SourceFormat = InlineSourceFormat | 'text_color';
 
 const FORMATS: readonly InlineSourceFormat[] = [
   'strong',
@@ -92,6 +96,166 @@ export function getActiveInlineSourceFormats(state: EditorState): Set<InlineSour
     }
   }
   return result;
+}
+
+/** 当前选区统一的文字颜色；混色或没有颜色时返回 null。 */
+export function getActiveInlineSourceTextColor(state: EditorState): string | null {
+  if (inStandaloneHtmlBlock(state)) {
+    const markType = state.schema.marks.text_color;
+    if (state.selection.empty) {
+      const mark = markType.isInSet(state.storedMarks ?? state.selection.$from.marks());
+      return mark ? normalizeTextColor(mark.attrs.color) : null;
+    }
+    let color: string | null | undefined;
+    state.doc.nodesBetween(state.selection.from, state.selection.to, (node) => {
+      if (!node.isText) return;
+      const mark = markType.isInSet(node.marks);
+      const value = mark ? normalizeTextColor(mark.attrs.color) : null;
+      if (color === undefined) color = value;
+      else if (color !== value) color = null;
+    });
+    return color ?? null;
+  }
+  let color: string | null | undefined;
+  for (const block of selectedBlocks(state)) {
+    const spans = block.spans.filter((span) => span.type === 'text_color');
+    if (state.selection.empty) {
+      const span = spans.find(
+        (candidate) => block.from > candidate.openFrom && block.from < candidate.closeTo,
+      );
+      if (!span) continue;
+      const value = normalizeTextColor(span.attrs?.color);
+      if (color === undefined) color = value;
+      else if (color !== value) return null;
+      continue;
+    }
+    let hasContent = false;
+    for (let pos = block.from; pos < block.to; pos += 1) {
+      if (
+        block.spans.some(
+          (span) => (pos >= span.openFrom && pos < span.openTo) || (pos >= span.closeFrom && pos < span.closeTo),
+        )
+      )
+        continue;
+      hasContent = true;
+      const span = spans.find((candidate) => pos >= candidate.from && pos < candidate.to);
+      const value = span ? normalizeTextColor(span.attrs?.color) : null;
+      if (!span) return null;
+      if (color === undefined) color = value;
+      else if (color !== value) return null;
+    }
+    if (!hasContent) continue;
+  }
+  return color ?? null;
+}
+
+/** 选择颜色：已有颜色改标签、局部选区拆分保留外侧颜色、无选区插入空 span。 */
+export function setInlineSourceTextColor(value: string): Command {
+  const color = normalizeTextColor(value);
+  return (state, dispatch) => {
+    if (!color) return false;
+    if (inStandaloneHtmlBlock(state)) {
+      const mark = state.schema.marks.text_color.create({ color });
+      if (state.selection.empty) {
+        if (dispatch) dispatch(state.tr.addStoredMark(mark));
+        return true;
+      }
+      const { from, to } = state.selection;
+      if (dispatch) dispatch(state.tr.addMark(from, to, mark));
+      return true;
+    }
+    const blocks = selectedBlocks(state);
+    if (!blocks.length) return false;
+    if (state.selection.empty) {
+      for (const block of blocks) {
+        const span = block.spans.find(
+          (candidate) =>
+            candidate.type === 'text_color' &&
+            block.from > candidate.openFrom &&
+            block.from < candidate.closeTo,
+        );
+        if (!span) continue;
+        if ((normalizeTextColor(span.attrs?.color) ?? '') === color) return false;
+        if (dispatch) {
+          const tr = state.tr;
+          applyEdits(state, tr, [
+            {
+              from: block.start + span.openFrom,
+              to: block.start + span.openTo,
+              text: inlineFormatDelimiters('text_color', '', { color }).open,
+            },
+          ]);
+          restoreSelection(state, tr);
+          dispatch(tr.scrollIntoView());
+        }
+        return true;
+      }
+      if (dispatch) {
+        const block = blocks[0];
+        const from = block.start + block.from;
+        const pair = inlineFormatDelimiters('text_color', '', { color });
+        const tr = state.tr;
+        applyEdits(state, tr, [{ from, to: from, text: pair.open + pair.close, order: 1 }]);
+        markSourceBlocks(tr, blocks);
+        const cursor = from + pair.open.length;
+        tr.setSelection(TextSelection.create(tr.doc, cursor));
+        dispatch(tr.scrollIntoView());
+      }
+      return true;
+    }
+    const edits = blocks.flatMap((block) => [
+      ...removeFormatEdits(block, 'text_color'),
+      ...wrapEdits(block, 'text_color', block.from, block.to, false, [], false, { color }),
+    ]);
+    if (!edits.length) return false;
+    if (dispatch) {
+      const tr = state.tr;
+      applyEdits(state, tr, edits);
+      markSourceBlocks(tr, blocks);
+      restoreSelection(state, tr);
+      dispatch(tr.scrollIntoView());
+    }
+    return true;
+  };
+}
+
+/** 清除选区或光标所在 span 的文字颜色，保留文字本身。 */
+export function clearInlineSourceTextColor(): Command {
+  return (state, dispatch) => {
+    if (inStandaloneHtmlBlock(state)) {
+      const mark = state.schema.marks.text_color;
+      if (state.selection.empty) {
+        if (!mark.isInSet(state.storedMarks ?? state.selection.$from.marks())) return false;
+        if (dispatch) dispatch(state.tr.removeStoredMark(mark));
+        return true;
+      }
+      if (!state.doc.rangeHasMark(state.selection.from, state.selection.to, mark)) return false;
+      if (dispatch) dispatch(state.tr.removeMark(state.selection.from, state.selection.to, mark));
+      return true;
+    }
+    const blocks = selectedBlocks(state);
+    const edits = blocks.flatMap((block) => removeFormatEdits(block, 'text_color'));
+    if (!edits.length) return false;
+    if (dispatch) {
+      const tr = state.tr;
+      applyEdits(state, tr, edits);
+      markSourceBlocks(tr, blocks);
+      restoreSelection(state, tr);
+      dispatch(tr.scrollIntoView());
+    }
+    return true;
+  };
+}
+
+/** 相同颜色再按一次即清除，否则直接改成目标颜色。 */
+export function toggleInlineSourceTextColor(value: string): Command {
+  const color = normalizeTextColor(value);
+  return (state, dispatch) => {
+    if (!color) return false;
+    if (getActiveInlineSourceTextColor(state) === color)
+      return clearInlineSourceTextColor()(state, dispatch);
+    return setInlineSourceTextColor(color)(state, dispatch);
+  };
 }
 
 /** Insert/remove real delimiters; no stored mark, fake caret position, or arrow-key interception. */
@@ -232,14 +396,15 @@ export function toggleInlineSourceFormat(type: InlineSourceFormat): Command {
 /** Append to the caller's transaction so clearing source + links/atoms stays one undo step. */
 export function appendClearInlineSourceStyles(state: EditorState, tr: Transaction): boolean {
   const blocks = selectedBlocks(state);
-  const edits = blocks.flatMap((block) =>
-    FORMATS.flatMap((type) =>
+  const edits = blocks.flatMap((block) => [
+    ...FORMATS.flatMap((type) =>
       removeFormatEdits(
         type === 'code' ? block : (alignSelectionWithCode(block, type) ?? block),
         type,
       ),
     ),
-  );
+    ...removeFormatEdits(block, 'text_color'),
+  ]);
   for (const template of getEmptyInlineSourceTemplates(state)) {
     const { from, to, empty } = state.selection;
     if (
@@ -498,7 +663,7 @@ function delimiterRemoval(start: number, span: SourceSpan): TextEdit[] {
   ];
 }
 
-function removeFormatEdits(block: SourceBlock, type: InlineSourceFormat): TextEdit[] {
+function removeFormatEdits(block: SourceBlock, type: SourceFormat): TextEdit[] {
   const edits: TextEdit[] = [];
   const cursor = block.from === block.to;
   for (const span of block.spans.filter((candidate) => candidate.type === type)) {
@@ -524,10 +689,10 @@ function removeFormatEdits(block: SourceBlock, type: InlineSourceFormat): TextEd
     const rightFrom = Math.max(block.to, span.from);
     // Split only the selected format. HTML boundaries avoid ambiguous adjacent * runs.
     if (leftTo > span.from) {
-      edits.push(...wrapEdits(block, type, span.from, leftTo, true, [], type === 'code'));
+      edits.push(...wrapEdits(block, type, span.from, leftTo, true, [], type === 'code', span.attrs));
     }
     if (rightFrom < span.to) {
-      edits.push(...wrapEdits(block, type, rightFrom, span.to, true, [], type === 'code'));
+      edits.push(...wrapEdits(block, type, rightFrom, span.to, true, [], type === 'code', span.attrs));
     }
   }
   return edits;
@@ -557,15 +722,16 @@ function applyFormatEdits(block: SourceBlock, type: InlineSourceFormat): TextEdi
 
 function wrapEdits(
   block: SourceBlock,
-  type: InlineSourceFormat,
+  type: SourceFormat,
   from: number,
   to: number,
   preferHtml = false,
   removedSpans: SourceSpan[] = [],
   preserveCodeBody = false,
+  attrs?: { color?: string },
 ): TextEdit[] {
   if (type === 'code') return wrapCodeEdits(block, from, to, removedSpans, preserveCodeBody);
-  let { open, close } = inlineFormatDelimiters(type, block.source.slice(from, to));
+  let { open, close } = inlineFormatDelimiters(type, block.source.slice(from, to), attrs);
   if (type === 'strong' || type === 'em' || type === 'strikethrough' || type === 'superscript' || type === 'subscript') {
     const candidate =
       block.source.slice(0, from) +

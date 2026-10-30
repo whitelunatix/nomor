@@ -9,6 +9,7 @@ mod file_clipboard;
 mod file_system;
 mod i18n;
 mod models;
+mod pdf_chrome;
 mod pdf_outline;
 mod software_update;
 mod text_document;

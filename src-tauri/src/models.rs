@@ -178,6 +178,15 @@ pub(crate) struct ExportPdfInput {
     pub(crate) print_background: Option<bool>,
     #[serde(default)]
     pub(crate) outline: Vec<PdfOutlineEntry>,
+    /// 页眉模板；支持 `{title}`、`{date}`、`{page}`、`{total}`，空字符串表示不绘制。
+    #[serde(default)]
+    pub(crate) header_template: String,
+    #[serde(default)]
+    pub(crate) footer_template: String,
+    #[serde(default)]
+    pub(crate) title: String,
+    #[serde(default)]
+    pub(crate) date: String,
 }
 
 #[derive(Debug, Serialize)]

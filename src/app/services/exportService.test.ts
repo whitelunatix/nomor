@@ -29,6 +29,43 @@ describe('exportService', () => {
     expect(exportHtmlFile).not.toHaveBeenCalled();
     expect(exportPdfFromHtml).not.toHaveBeenCalled();
   });
+  it('PDF 导出把纸张、页边距与页眉页脚模板传给原生打印', async () => {
+    vi.mocked(save).mockResolvedValueOnce('D:/docs/out.pdf');
+    vi.mocked(exportPdfFromHtml).mockResolvedValueOnce({ file_path: 'D:/docs/out.pdf', bytes_written: 12 });
+    const snapshot = {
+      documentId: 'a',
+      contentRevision: 1,
+      markdown: '正文\n\n<div class="nomo-page-break"></div>',
+      documentPath: null,
+      title: '标题',
+      suggestedFileName: 'a',
+      appearance: captureExportAppearance(),
+    };
+    const result = await exportPdf(snapshot, {
+      pdfLayout: {
+        paperSize: 'A5',
+        orientation: 'landscape',
+        margins: { top: 10, right: 12, bottom: 14, left: 16 },
+        headerTemplate: '{title}',
+        footerTemplate: '第 {page} 页 / 共 {total} 页',
+        pageBreakBeforeH1: true,
+      },
+    });
+
+    expect(result.success).toBe(true);
+    const input = vi.mocked(exportPdfFromHtml).mock.calls.at(-1)?.[0];
+    expect(input).toMatchObject({
+      paper_size: 'A5',
+      orientation: 'landscape',
+      margins: { top: 10, right: 12, bottom: 14, left: 16 },
+      header_template: '{title}',
+      footer_template: '第 {page} 页 / 共 {total} 页',
+      title: '标题',
+    });
+    expect(input?.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(input?.html_content).toContain('nomo-page-break');
+  });
+
   it('drops auto-layout geometry but retains authored column widths and contents', () => {
     const html = cleanEditorArtifacts('<div class="nomo-table-scroll"><table data-table-layout="ready" data-table-layout-version="4" style="width:900px;table-layout:fixed;zoom:0.5"><colgroup data-table-layout-owned="true"><col style="width:899px"></colgroup><tbody><tr><th data-colwidth="180">Name</th></tr><tr><td>Value</td></tr></tbody></table></div>');
     const doc = new DOMParser().parseFromString(html, 'text/html');

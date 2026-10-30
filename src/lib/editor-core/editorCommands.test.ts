@@ -78,6 +78,90 @@ describe('editorCommands', () => {
     destroyView(view);
   });
 
+  it('为选中文本设置文字颜色', () => {
+    const view = createMarkdownCommandView('重点', paragraphContentSelection);
+
+    expect(
+      executeEditorCommand({ type: 'setTextColor', color: '#e11d48' }, view, '', () => undefined),
+    ).toBe(true);
+    expect(currentMarkdown(view)).toBe('<span style="color: #e11d48">重点</span>');
+
+    destroyView(view);
+  });
+
+  it('修改已有文字颜色时替换标签而非嵌套', () => {
+    const view = createMarkdownCommandView(
+      '<span style="color: #e11d48">重点</span>',
+      paragraphContentSelection,
+    );
+
+    expect(
+      executeEditorCommand({ type: 'setTextColor', color: '#2563eb' }, view, '', () => undefined),
+    ).toBe(true);
+    expect(currentMarkdown(view)).toBe('<span style="color: #2563eb">重点</span>');
+
+    destroyView(view);
+  });
+
+  it('只改选中文字的颜色并保留两侧原颜色', () => {
+    const source = '<span style="color: #e11d48">abc</span>';
+    const start = 1 + source.indexOf('abc');
+    const view = createMarkdownCommandView(source, (doc) =>
+      TextSelection.create(doc, start + 1, start + 2),
+    );
+
+    expect(
+      executeEditorCommand({ type: 'setTextColor', color: '#2563eb' }, view, '', () => undefined),
+    ).toBe(true);
+    expect(currentMarkdown(view)).toBe(
+      '<span style="color: #e11d48">a</span><span style="color: #2563eb">b</span><span style="color: #e11d48">c</span>',
+    );
+
+    destroyView(view);
+  });
+
+  it('相同颜色再次切换会清除文字颜色', () => {
+    const view = createMarkdownCommandView(
+      '<span style="color: #16a34a">重点</span>',
+      paragraphContentSelection,
+    );
+
+    expect(
+      executeEditorCommand({ type: 'toggleTextColor', color: '#16a34a' }, view, '', () => undefined),
+    ).toBe(true);
+    expect(currentMarkdown(view)).toBe('重点');
+
+    destroyView(view);
+  });
+
+  it('清除行内样式同时移除文字颜色', () => {
+    const view = createMarkdownCommandView(
+      '<span style="color: #9333ea">**重点**</span>',
+      paragraphContentSelection,
+    );
+
+    expect(runClearInlineStyles(view)).toBe(true);
+    expect(currentMarkdown(view)).toBe('重点');
+
+    destroyView(view);
+  });
+
+  it('拒绝不安全的文字颜色值', () => {
+    const view = createMarkdownCommandView('重点', paragraphContentSelection);
+
+    expect(
+      executeEditorCommand(
+        { type: 'setTextColor', color: 'red; background: url(x)' },
+        view,
+        '',
+        () => undefined,
+      ),
+    ).toBe(false);
+    expect(currentMarkdown(view)).toBe('重点');
+
+    destroyView(view);
+  });
+
   it('清除链接样式并保留链接文字', () => {
     const view = createMarkdownCommandView(
       '[链接](https://example.com)',
@@ -948,6 +1032,32 @@ describe('editorCommands', () => {
 
     view.destroy();
     target.remove();
+  });
+
+  describe('insertPageBreak', () => {
+    it('在空文档中插入分页符并在其后保留可输入段落', () => {
+      const view = createMarkdownCommandView('', (doc) => TextSelection.create(doc, 1));
+
+      executeEditorCommand({ type: 'insertPageBreak' }, view, '', () => undefined);
+
+      expect(getTopLevelNodeNames(view.state.doc)).toEqual(['html_block', 'paragraph']);
+      expect(currentMarkdown(view)).toBe('<div class="nomo-page-break"></div>');
+      expect(view.state.selection).toBeInstanceOf(TextSelection);
+      expect(view.state.selection.empty).toBe(true);
+      destroyView(view);
+    });
+
+    it('在段落中间插入时把段落拆成前后两段', () => {
+      const view = createMarkdownCommandView('前后', (doc) => TextSelection.create(doc, 2));
+
+      executeEditorCommand({ type: 'insertPageBreak' }, view, '', () => undefined);
+
+      expect(getTopLevelNodeNames(view.state.doc)).toEqual(['paragraph', 'html_block', 'paragraph']);
+      expect(view.state.doc.child(0).textContent).toBe('前');
+      expect(view.state.doc.child(2).textContent).toBe('后');
+      expect(currentMarkdown(view)).toContain('nomo-page-break');
+      destroyView(view);
+    });
   });
 
   describe('insertHorizontalRule', () => {

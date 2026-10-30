@@ -28,6 +28,13 @@ import {
 } from '../../lib/services/render';
 import { logDebug, logWarn, perfAsync } from '../../lib/services/logger';
 import {
+  PDF_LAYOUT_MAX_TEMPLATE_LENGTH,
+  PDF_PAPER_SIZES,
+  type PdfLayout,
+  type PdfOrientation,
+  type PdfPaperSize,
+} from '../../lib/export/pdfLayout';
+import {
   DEFAULT_INTERFACE_LANGUAGE,
   isInterfaceLanguagePreference,
   type InterfaceLanguagePreference,
@@ -50,6 +57,8 @@ export type ExternalFileChangeBehavior = 'reload-external' | 'overwrite-external
 export type WritingStatsMetric = 'lines' | 'words' | 'visibleChars' | 'chars';
 export type ImageDefaultAlignPreference = ImageDefaultAlign;
 export type CodeBlockIndentPreference = 'spaces-2' | 'spaces-4' | 'tab';
+export type { PdfPaperSize, PdfOrientation };
+export { PDF_PAPER_SIZES } from '../../lib/export/pdfLayout';
 export type RenderModePreference = 'hardware' | 'software';
 export type { MarkdownLintRuleSet };
 export type { InterfaceLanguagePreference };
@@ -69,6 +78,8 @@ export type ShortcutCommandId =
   | 'insert-table'
   | 'insert-math-block'
   | 'menu-link'
+  | 'menu-highlight'
+  | 'menu-text-color'
   | 'menu-clear-format';
 
 export type ShortcutPreferences = Record<ShortcutCommandId, string>;
@@ -127,6 +138,15 @@ export interface AppPreferences {
   renderMode: RenderModePreference;
   shortcutPreferences: ShortcutPreferences;
   imageHandlingSettings: ImageHandlingSettings;
+  pdfPaperSize: PdfPaperSize;
+  pdfOrientation: PdfOrientation;
+  pdfMarginTop: number;
+  pdfMarginRight: number;
+  pdfMarginBottom: number;
+  pdfMarginLeft: number;
+  pdfHeaderTemplate: string;
+  pdfFooterTemplate: string;
+  pdfPageBreakBeforeH1: boolean;
   developerMode: boolean;
   softwareUpdateAutoCheckEnabled: boolean;
 }
@@ -166,6 +186,8 @@ export const DEFAULT_SHORTCUT_PREFERENCES: ShortcutPreferences = {
   'insert-table': 'Ctrl+Shift+T',
   'insert-math-block': 'Ctrl+Shift+M',
   'menu-link': 'Ctrl+K',
+  'menu-highlight': 'Ctrl+Alt+H',
+  'menu-text-color': 'Ctrl+Alt+C',
   'menu-clear-format': 'Ctrl+\\',
 };
 
@@ -214,9 +236,35 @@ export const DEFAULT_APP_PREFERENCES: AppPreferences = {
   renderMode: 'hardware',
   shortcutPreferences: { ...DEFAULT_SHORTCUT_PREFERENCES },
   imageHandlingSettings: { ...DEFAULT_IMAGE_HANDLING_SETTINGS },
+  pdfPaperSize: 'A4',
+  pdfOrientation: 'portrait',
+  pdfMarginTop: 20,
+  pdfMarginRight: 20,
+  pdfMarginBottom: 20,
+  pdfMarginLeft: 20,
+  pdfHeaderTemplate: '',
+  pdfFooterTemplate: '{page} / {total}',
+  pdfPageBreakBeforeH1: false,
   developerMode: false,
   softwareUpdateAutoCheckEnabled: true,
 };
+
+/** 把偏好中的 PDF 字段收敛成导出服务使用的排版选项。 */
+export function pdfLayoutFromPreferences(preferences: AppPreferences): PdfLayout {
+  return {
+    paperSize: preferences.pdfPaperSize,
+    orientation: preferences.pdfOrientation,
+    margins: {
+      top: preferences.pdfMarginTop,
+      right: preferences.pdfMarginRight,
+      bottom: preferences.pdfMarginBottom,
+      left: preferences.pdfMarginLeft,
+    },
+    headerTemplate: preferences.pdfHeaderTemplate,
+    footerTemplate: preferences.pdfFooterTemplate,
+    pageBreakBeforeH1: preferences.pdfPageBreakBeforeH1,
+  };
+}
 
 export const SETTINGS_UPDATED_EVENT = 'nomo://settings-updated';
 
@@ -346,6 +394,15 @@ export async function loadAppPreferences(
       settings,
       'imageHandlingSettings',
     ),
+    pdfPaperSize: parseSetting<unknown>(settings, 'pdfPaperSize'),
+    pdfOrientation: parseSetting<unknown>(settings, 'pdfOrientation'),
+    pdfMarginTop: parseSetting<unknown>(settings, 'pdfMarginTop'),
+    pdfMarginRight: parseSetting<unknown>(settings, 'pdfMarginRight'),
+    pdfMarginBottom: parseSetting<unknown>(settings, 'pdfMarginBottom'),
+    pdfMarginLeft: parseSetting<unknown>(settings, 'pdfMarginLeft'),
+    pdfHeaderTemplate: parseSetting<unknown>(settings, 'pdfHeaderTemplate'),
+    pdfFooterTemplate: parseSetting<unknown>(settings, 'pdfFooterTemplate'),
+    pdfPageBreakBeforeH1: parseSetting<unknown>(settings, 'pdfPageBreakBeforeH1'),
     developerMode: parseSetting<unknown>(settings, 'developerMode'),
     softwareUpdateAutoCheckEnabled: parseSetting<unknown>(
       settings,
@@ -549,6 +606,27 @@ export function normalizeAppPreferences(
     imageHandlingSettings: normalizeImageSettings(
       value.imageHandlingSettings as Partial<ImageHandlingSettings> | null | undefined,
     ),
+    pdfPaperSize: isPdfPaperSize(value.pdfPaperSize)
+      ? value.pdfPaperSize
+      : DEFAULT_APP_PREFERENCES.pdfPaperSize,
+    pdfOrientation: isPdfOrientation(value.pdfOrientation)
+      ? value.pdfOrientation
+      : DEFAULT_APP_PREFERENCES.pdfOrientation,
+    pdfMarginTop: clampNumber(value.pdfMarginTop, 0, 50, DEFAULT_APP_PREFERENCES.pdfMarginTop),
+    pdfMarginRight: clampNumber(value.pdfMarginRight, 0, 50, DEFAULT_APP_PREFERENCES.pdfMarginRight),
+    pdfMarginBottom: clampNumber(
+      value.pdfMarginBottom,
+      0,
+      50,
+      DEFAULT_APP_PREFERENCES.pdfMarginBottom,
+    ),
+    pdfMarginLeft: clampNumber(value.pdfMarginLeft, 0, 50, DEFAULT_APP_PREFERENCES.pdfMarginLeft),
+    pdfHeaderTemplate: normalizePdfTemplate(value.pdfHeaderTemplate, DEFAULT_APP_PREFERENCES.pdfHeaderTemplate),
+    pdfFooterTemplate: normalizePdfTemplate(value.pdfFooterTemplate, DEFAULT_APP_PREFERENCES.pdfFooterTemplate),
+    pdfPageBreakBeforeH1:
+      typeof value.pdfPageBreakBeforeH1 === 'boolean'
+        ? value.pdfPageBreakBeforeH1
+        : DEFAULT_APP_PREFERENCES.pdfPageBreakBeforeH1,
     developerMode:
       typeof value.developerMode === 'boolean'
         ? value.developerMode
@@ -707,6 +785,15 @@ function toPersistedPreferenceEntries(
     renderMode: preferences.renderMode,
     shortcutPreferences: preferences.shortcutPreferences,
     imageHandlingSettings: preferences.imageHandlingSettings,
+    pdfPaperSize: preferences.pdfPaperSize,
+    pdfOrientation: preferences.pdfOrientation,
+    pdfMarginTop: preferences.pdfMarginTop,
+    pdfMarginRight: preferences.pdfMarginRight,
+    pdfMarginBottom: preferences.pdfMarginBottom,
+    pdfMarginLeft: preferences.pdfMarginLeft,
+    pdfHeaderTemplate: preferences.pdfHeaderTemplate,
+    pdfFooterTemplate: preferences.pdfFooterTemplate,
+    pdfPageBreakBeforeH1: preferences.pdfPageBreakBeforeH1,
     developerMode: preferences.developerMode,
     softwareUpdateAutoCheckEnabled: preferences.softwareUpdateAutoCheckEnabled,
   };
@@ -884,6 +971,20 @@ function isCodeBlockIndentPreference(value: unknown): value is CodeBlockIndentPr
 
 function isRenderModePreference(value: unknown): value is RenderModePreference {
   return value === 'hardware' || value === 'software';
+}
+
+function isPdfPaperSize(value: unknown): value is PdfPaperSize {
+  return PDF_PAPER_SIZES.includes(value as PdfPaperSize);
+}
+
+function isPdfOrientation(value: unknown): value is PdfOrientation {
+  return value === 'portrait' || value === 'landscape';
+}
+
+function normalizePdfTemplate(value: unknown, fallback: string): string {
+  if (typeof value !== 'string') return fallback;
+  // 页眉页脚最多两行，长度受限，避免把导出页边距撑满。
+  return value.slice(0, PDF_LAYOUT_MAX_TEMPLATE_LENGTH);
 }
 
 function isMarkdownLintRuleSet(value: unknown): value is MarkdownLintRuleSet {

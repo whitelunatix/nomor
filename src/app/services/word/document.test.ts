@@ -39,6 +39,14 @@ describe('Word document export', () => {
     const { text } = await unpack(document);
     expect(await text('word/_rels/document.xml.rels')).not.toContain('data:image');
   });
+  it('文字颜色导出为 Word run 颜色并去掉 HTML 包装', async () => {
+    const { document } = await model('正文<span style="color: #e11d48">红色</span>');
+    const { xml, dom } = await unpack(document);
+    expect(xml).toContain('w:color w:val="E11D48"');
+    expect(xml).not.toContain('<span');
+    expect(dom.querySelector('parsererror')).toBeNull();
+  });
+
   it('未引用脚注仍保留正文，六级标题分别保留 Word 样式', async () => {
     const { document } = await model('# One\n\n## Two\n\n### Three\n\n#### Four\n\n##### Five\n\n###### Six\n\n[^orphan]: 无引用但不能丢失');
     const { xml } = await unpack(document);

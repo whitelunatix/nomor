@@ -42,11 +42,17 @@
     type OpenDefaultBehavior,
     type InterfaceLanguagePreference,
     type MarkdownLintRuleSet,
+    type PdfOrientation,
+    type PdfPaperSize,
     type RenderModePreference,
     type SplitViewLayoutPreference,
     type ShortcutCommandId,
     type WritingStatsMetric,
   } from '../services/settings';
+  import {
+    PDF_LAYOUT_MAX_TEMPLATE_LENGTH,
+    PDF_PAPER_SIZES,
+  } from '../../lib/export/pdfLayout';
   import { suppressUnhandledContextMenu } from '../services/contextMenuPolicy';
   import {
     applyThemeRuntime,
@@ -291,6 +297,8 @@
     { id: 'insert-table', labelKey: 'insertTable' },
     { id: 'insert-math-block', labelKey: 'insertMathBlock' },
     { id: 'menu-link', labelKey: 'editLink' },
+    { id: 'menu-highlight', labelKey: 'highlight' },
+    { id: 'menu-text-color', labelKey: 'textColor' },
     { id: 'menu-clear-format', labelKey: 'clearStyle' },
   ];
 
@@ -1244,6 +1252,31 @@
 
   function setMarkdownLintRuleSet(markdownLintRuleSet: MarkdownLintRuleSet) {
     updateDraft({ markdownLintRuleSet });
+  }
+
+  function setPdfPaperSize(pdfPaperSize: PdfPaperSize) {
+    updateDraft({ pdfPaperSize });
+  }
+
+  function setPdfOrientation(pdfOrientation: PdfOrientation) {
+    updateDraft({ pdfOrientation });
+  }
+
+  function updatePdfMargin(
+    key: 'pdfMarginTop' | 'pdfMarginRight' | 'pdfMarginBottom' | 'pdfMarginLeft',
+    event: Event,
+  ) {
+    const raw = Number((event.currentTarget as HTMLInputElement).value);
+    const value = Number.isFinite(raw) ? Math.min(50, Math.max(0, Math.round(raw))) : DEFAULT_APP_PREFERENCES[key];
+    updateDraft({ [key]: value });
+  }
+
+  function updatePdfTemplate(key: 'pdfHeaderTemplate' | 'pdfFooterTemplate', event: Event) {
+    const value = (event.currentTarget as HTMLInputElement).value.slice(
+      0,
+      PDF_LAYOUT_MAX_TEMPLATE_LENGTH,
+    );
+    updateDraft({ [key]: value });
   }
 
   function updateShortcut(commandId: ShortcutCommandId, event: Event) {
@@ -2215,6 +2248,139 @@
                   >
                 </div>
               </div>
+            </div>
+
+            <div class="settings-group">
+              <h2>{t.pdfLayout()}</h2>
+              <div class="setting-row">
+                <div>
+                  <span class="setting-label">{t.pdfPaperSize()}</span>
+                  <p>{t.pdfPaperSizeDescription()}</p>
+                </div>
+                <select
+                  class="select-input"
+                  value={draftSettings.pdfPaperSize}
+                  on:change={(event) =>
+                    setPdfPaperSize((event.currentTarget as HTMLSelectElement).value as PdfPaperSize)}
+                >
+                  {#each PDF_PAPER_SIZES as size}
+                    <option value={size}>{size}</option>
+                  {/each}
+                </select>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <span class="setting-label">{t.pdfOrientation()}</span>
+                  <p>{t.pdfOrientationDescription()}</p>
+                </div>
+                <div class="segmented-control" role="group" aria-label={t.pdfOrientation()}>
+                  <button
+                    type="button"
+                    class:active={draftSettings.pdfOrientation === 'portrait'}
+                    aria-pressed={draftSettings.pdfOrientation === 'portrait'}
+                    on:click={() => setPdfOrientation('portrait')}>{t.pdfPortrait()}</button
+                  >
+                  <button
+                    type="button"
+                    class:active={draftSettings.pdfOrientation === 'landscape'}
+                    aria-pressed={draftSettings.pdfOrientation === 'landscape'}
+                    on:click={() => setPdfOrientation('landscape')}>{t.pdfLandscape()}</button
+                  >
+                </div>
+              </div>
+              <div class="setting-row">
+                <div>
+                  <span class="setting-label">{t.pdfMargins()}</span>
+                  <p>{t.pdfMarginsDescription()}</p>
+                </div>
+                <div class="pdf-margin-grid">
+                  <label>
+                    <span>{t.pdfMarginTop()}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="50"
+                      step="1"
+                      value={draftSettings.pdfMarginTop}
+                      on:change={(event) => updatePdfMargin('pdfMarginTop', event)}
+                    />
+                  </label>
+                  <label>
+                    <span>{t.pdfMarginRight()}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="50"
+                      step="1"
+                      value={draftSettings.pdfMarginRight}
+                      on:change={(event) => updatePdfMargin('pdfMarginRight', event)}
+                    />
+                  </label>
+                  <label>
+                    <span>{t.pdfMarginBottom()}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="50"
+                      step="1"
+                      value={draftSettings.pdfMarginBottom}
+                      on:change={(event) => updatePdfMargin('pdfMarginBottom', event)}
+                    />
+                  </label>
+                  <label>
+                    <span>{t.pdfMarginLeft()}</span>
+                    <input
+                      type="number"
+                      min="0"
+                      max="50"
+                      step="1"
+                      value={draftSettings.pdfMarginLeft}
+                      on:change={(event) => updatePdfMargin('pdfMarginLeft', event)}
+                    />
+                  </label>
+                </div>
+              </div>
+              <div class="setting-row setting-stack">
+                <div>
+                  <span class="setting-label">{t.pdfHeader()}</span>
+                  <p>{t.pdfTemplateHint()}</p>
+                </div>
+                <input
+                  class="text-input"
+                  type="text"
+                  maxlength={PDF_LAYOUT_MAX_TEMPLATE_LENGTH}
+                  value={draftSettings.pdfHeaderTemplate}
+                  placeholder={t.pdfHeaderPlaceholder()}
+                  on:input={(event) => updatePdfTemplate('pdfHeaderTemplate', event)}
+                />
+              </div>
+              <div class="setting-row setting-stack">
+                <div>
+                  <span class="setting-label">{t.pdfFooter()}</span>
+                  <p>{t.pdfTemplateHint()}</p>
+                </div>
+                <input
+                  class="text-input"
+                  type="text"
+                  maxlength={PDF_LAYOUT_MAX_TEMPLATE_LENGTH}
+                  value={draftSettings.pdfFooterTemplate}
+                  placeholder={t.pdfFooterPlaceholder()}
+                  on:input={(event) => updatePdfTemplate('pdfFooterTemplate', event)}
+                />
+              </div>
+              <label class="toggle-row" for="pdfPageBreakBeforeH1">
+                <span>
+                  <span class="toggle-title">{t.pdfPageBreakBeforeH1()}</span>
+                  <span class="toggle-desc">{t.pdfPageBreakBeforeH1Description()}</span>
+                </span>
+                <input
+                  id="pdfPageBreakBeforeH1"
+                  type="checkbox"
+                  checked={draftSettings.pdfPageBreakBeforeH1}
+                  on:change={(event) => toggleSetting('pdfPageBreakBeforeH1', event)}
+                />
+                <span class="toggle-switch" aria-hidden="true"></span>
+              </label>
             </div>
           {:else if activeCategory === 'appearance'}
             <div class="settings-group">
@@ -3660,6 +3826,27 @@
     opacity: 0.55;
   }
 
+  .setting-row.setting-stack {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .pdf-margin-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+  }
+
+  .pdf-margin-grid label {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    color: var(--md-editor-muted-fg);
+    font-size: var(--md-editor-ui-font-size-sm);
+  }
+
   .segmented-control,
   .triple-control,
   .quad-control {
@@ -3755,7 +3942,8 @@
 
   .text-input,
   .select-input,
-  .number-field input {
+  .number-field input,
+  .pdf-margin-grid input {
     width: 100%;
     min-width: 0;
     height: var(--md-editor-control-height-md);
