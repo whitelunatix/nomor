@@ -1047,6 +1047,38 @@
   font-style: italic;
 }
 
+.image-node.is-draggable {
+  cursor: grab;
+}
+
+.image-node.is-dragging {
+  cursor: grabbing;
+  opacity: 0.55;
+}
+
+.image-node.is-dragging img {
+  pointer-events: none;
+}
+
+body.is-image-dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+.image-drop-indicator {
+  position: fixed;
+  z-index: 10000;
+  width: 2px;
+  border-radius: 1px;
+  background: var(--md-editor-accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--md-editor-accent) 35%, transparent);
+  pointer-events: none;
+}
+
+.image-drop-indicator.is-invalid {
+  display: none;
+}
+
 .image-node-fullscreen-button,
 .image-fullscreen-close-button {
   display: inline-grid;

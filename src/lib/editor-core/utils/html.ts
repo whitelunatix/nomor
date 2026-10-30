@@ -1,3 +1,4 @@
+import { isSafeImageSource } from '../html/htmlClassifier';
 import { DANGEROUS_TAGS, EDITABLE_BLOCK_TAGS, EDITABLE_INLINE_TAGS } from '../html/htmlPolicy';
 import { normalizeLinkHref } from '../link';
 import { readTextColorFromStyle } from '../textColor';
@@ -79,9 +80,13 @@ export function sanitizeHtml(html: string): string {
         continue;
       }
       if (name === 'href' || name === 'src') {
-        // DOM 已解码字符实体，再复用 Markdown 链接的协议和控制字符边界。
-        const href = normalizeLinkHref(attribute.value);
-        if (href) element.setAttribute(name, href);
+        // DOM 已解码字符实体，再复用 Markdown 链接的协议和控制字符边界；
+        // 图片地址额外允许编辑器已有的本地/内嵌图片来源。
+        const value = attribute.value.trim();
+        const normalized = tag === 'img' && name === 'src'
+          ? (isSafeImageSource(value) ? value : null)
+          : normalizeLinkHref(value);
+        if (normalized) element.setAttribute(name, normalized);
         else element.removeAttributeNode(attribute);
       }
     }

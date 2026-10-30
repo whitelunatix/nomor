@@ -415,6 +415,35 @@ describe('markdown serialization', () => {
     expect(serializeMarkdown(doc).trim()).toBe('<section>HTML</section>\n\n<!--\n注释\n-->');
   });
 
+  it('round trips colored spans inside editable HTML blocks', () => {
+    const input = '<div><span style="color: #e11d48">红</span>字</div>';
+    const doc = parseMarkdown(input);
+    const block = doc.child(0);
+
+    expect(block.type.name).toBe('html_block');
+    expect(block.child(0).marks.map((mark) => mark.type.name)).toContain('text_color');
+    expect(block.child(0).marks.find((mark) => mark.type.name === 'text_color')?.attrs.color).toBe(
+      '#e11d48',
+    );
+    expect(serializeMarkdown(doc).trim()).toBe(input);
+  });
+
+  it('serializes text color marks added inside HTML blocks', () => {
+    const doc = schema.node('doc', null, [
+      schema.nodes.html_block.create({ tag: 'section' }, [
+        schema.text('蓝', [schema.marks.text_color.create({ color: 'rgb(37, 99, 235)' })]),
+      ]),
+    ]);
+    const serialized = serializeMarkdown(doc).trim();
+
+    expect(serialized).toBe(
+      '<section><span style="color: rgb(37, 99, 235)">蓝</span></section>',
+    );
+    expect(parseMarkdown(serialized).child(0).child(0).marks.map((mark) => mark.type.name)).toContain(
+      'text_color',
+    );
+  });
+
   it('keeps manual page break HTML blocks stable across round trips', () => {
     const input = '正文\n\n<div class="nomo-page-break"></div>\n\n后文';
     const doc = parseMarkdown(input);

@@ -5,6 +5,7 @@
 @import './editor-table-controls.css';
 @import './editor-quick-insert.css';
 @import './editor-emoji.css';
+@import './editor-completion.css';
 @import './editor-source.css';
 @import './editor-toc.css';
 @import './editor-docx.css';

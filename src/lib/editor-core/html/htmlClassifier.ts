@@ -1,7 +1,17 @@
 import { EDITABLE_BLOCK_TAGS, EDITABLE_INLINE_TAGS, DANGEROUS_TAGS } from './htmlPolicy';
 import { parseHtmlAttributes } from '../markdownTokenizer';
 import { normalizeLinkHref } from '../link';
+import { colorFromStyleOnly } from '../textColor';
 import { createHtmlAnchorAttrs } from './htmlAnchor';
+
+/** 图片地址与可编辑图片节点共用同一套协议边界。 */
+export function isSafeImageSource(src: string): boolean {
+  if (/[\u0000-\u001f\u007f]/.test(src)) return false;
+  return Boolean(
+    normalizeLinkHref(src) || /^(?:asset|tauri|file|blob):/i.test(src) ||
+    /^data:image\/(?:png|jpe?g|gif|webp|avif|bmp|svg\+xml);base64,/i.test(src),
+  );
+}
 
 export interface HtmlBlockClassification {
   editable: boolean;
@@ -34,10 +44,7 @@ export function readHtmlInlineAtom(tag: string, attrs: Record<string, string>): 
   }
   if (tag === 'img' && attrs.src !== undefined && only(['src', 'alt', 'title', 'width', 'align'])) {
     const src = attrs.src;
-    if (/[\u0000-\u001f\u007f]/.test(src) || !(
-      normalizeLinkHref(src) || /^(?:asset|tauri|file|blob):/i.test(src) ||
-      /^data:image\/(?:png|jpe?g|gif|webp|avif|bmp|svg\+xml);base64,/i.test(src)
-    )) return null;
+    if (!isSafeImageSource(src)) return null;
     if (attrs.align && !['left', 'center', 'right'].includes(attrs.align)) return null;
     return { type: 'image', attrs: {
       src, alt: attrs.alt ?? null, title: attrs.title ?? null,
@@ -109,7 +116,13 @@ function isRepresentableInline(tag: string, attrs: Record<string, string>): bool
     if (Object.keys(attrs).some((name) => !['href', 'title', 'id', 'name'].includes(name))) return false;
     return createHtmlAnchorAttrs(attrs.href ?? null, attrs.title ?? null, attrs.id ?? null, attrs.name ?? null) !== null;
   }
-  // span 无属性时只承载文字；带属性的 wrapper 不能无声扁平化。
+  // span 无属性时只承载文字；唯一的例外是只带一条 color 声明的 style，
+  // 它对应 text_color mark，可以无损往返。
+  if (tag === 'span') {
+    const names = Object.keys(attrs);
+    if (names.length === 0) return true;
+    return names.length === 1 && names[0] === 'style' && colorFromStyleOnly(attrs.style) !== null;
+  }
   return tag !== 'img' && tag !== 'br' && Object.keys(attrs).length === 0;
 }
 

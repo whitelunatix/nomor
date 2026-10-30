@@ -58,6 +58,21 @@ describe('htmlClassifier', () => {
       expect(result.editable).toBe(false);
     });
 
+    it('识别只带 color 声明的 span，颜色可作为 mark 往返', () => {
+      const result = classifyHtmlBlock(
+        '<section><span style="color: #e11d48">红</span></section>',
+      );
+      expect(result.editable).toBe(true);
+      expect(result.innerHTML).toContain('style="color: #e11d48"');
+    });
+
+    it('span 混入其它样式时回退，避免保存后丢样式', () => {
+      const result = classifyHtmlBlock(
+        '<section><span style="color: #e11d48; background: red">红</span></section>',
+      );
+      expect(result.editable).toBe(false);
+    });
+
     it('识别空块', () => {
       const result = classifyHtmlBlock('<section></section>');
       expect(result.editable).toBe(true);

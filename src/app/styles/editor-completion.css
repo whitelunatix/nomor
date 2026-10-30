@@ -1,0 +1,56 @@
+.html-css-completion {
+  position: fixed;
+  z-index: var(--md-editor-z-context-menu);
+  display: none;
+  width: min(300px, calc(100vw - 16px));
+  max-height: min(264px, calc(100vh - 16px));
+  overflow-y: auto;
+  padding: 5px;
+  box-sizing: border-box;
+  color: var(--md-editor-fg);
+  background: var(--md-editor-surface);
+  border: 1px solid var(--md-editor-border);
+  border-radius: var(--md-editor-radius-lg);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--md-editor-fg) 12%, transparent);
+  font-family: var(--md-editor-font-body);
+  font-size: var(--md-editor-ui-font-size);
+}
+.html-css-completion-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: var(--md-editor-radius-sm);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.html-css-completion-item:hover,
+.html-css-completion-item.is-active {
+  background: color-mix(in srgb, var(--md-editor-accent) 12%, var(--md-editor-surface));
+}
+.html-css-completion-item:focus-visible {
+  outline: 2px solid var(--md-editor-accent);
+  outline-offset: -2px;
+}
+.html-css-completion-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--md-editor-font-mono, ui-monospace, SFMono-Regular, Consolas, monospace);
+}
+.html-css-completion-detail {
+  flex: none;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--md-editor-muted-fg);
+  font-size: var(--md-editor-ui-font-size-sm);
+}

@@ -349,8 +349,13 @@ export class ProseMirrorEditorCore implements EditorCore {
         table: (node, view) => new TableNodeView(node, view),
         code_block: (node, view, getPos) =>
           new CodeBlockNodeView(node, view, getPos as () => number, this.isRestoringNodeSelection(getPos)),
-        image: (node, view) =>
-          new ImageNodeView(node, view, () => this.options.getImageContext?.() ?? {}),
+        image: (node, view, getPos) =>
+          new ImageNodeView(
+            node,
+            view,
+            getPos as () => number,
+            () => this.options.getImageContext?.() ?? {},
+          ),
         html_block: (node, view, getPos) =>
           new HtmlBlockNodeView(node, view, getPos as () => number),
         comment_block: (node, view, getPos) =>

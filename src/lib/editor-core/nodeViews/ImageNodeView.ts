@@ -3,6 +3,7 @@ import type { EditorView } from 'prosemirror-view';
 import type { ImageContext, ImageResolveResult } from '../../services/render';
 import { onInterfaceLocaleChanged, t } from '../../../app/i18n';
 import { getImageLoader } from '../renderers';
+import { moveImageTransaction } from '../imageDrag';
 import { registerActiveEdit, unregisterActiveEdit } from './activeEditRegistry';
 import {
   mountContextMenuFactory,
@@ -53,17 +54,33 @@ export class ImageNodeView {
   private lastContextMenuX = 0;
   private lastContextMenuY = 0;
   private unsubscribeLocale: () => void = () => undefined;
+  private drag:
+    | {
+        pointerId: number;
+        startX: number;
+        startY: number;
+        active: boolean;
+        indicator: HTMLElement | null;
+      }
+    | null = null;
+  private readonly handleDocumentPointerMove = (event: PointerEvent) => this.trackPointerDrag(event);
+  private readonly handleDocumentPointerUp = (event: PointerEvent) => this.finishPointerDrag(event);
+  private readonly handleDocumentPointerCancel = (event: PointerEvent) =>
+    this.finishPointerDrag(event, true);
 
   constructor(
     node: ProseMirrorNode,
     private readonly view: EditorView,
+    private readonly getPos: () => number,
     private readonly getImageContext: () => ImageContext,
   ) {
     this.node = node;
     this.dom = document.createElement('span');
     ImageNodeView.instances.set(this.dom, this);
     this.dom.className = 'image-node';
+    this.dom.classList.toggle('is-draggable', view.editable);
     this.dom.contentEditable = 'false';
+    this.dom.addEventListener('pointerdown', (event) => this.beginPointerDrag(event));
     this.dom.addEventListener('mousedown', (event) => this.handleMouseDown(event));
     this.dom.addEventListener('dblclick', (event) => this.handleDblClick(event));
     this.dom.addEventListener('contextmenu', (event) => this.handleContextMenu(event));
@@ -117,6 +134,8 @@ export class ImageNodeView {
       node.attrs.align !== this.node.attrs.align ||
       node.attrs.width !== this.node.attrs.width;
     this.node = node;
+    if (!this.view.editable) this.cancelPointerDrag();
+    this.dom.classList.toggle('is-draggable', this.view.editable);
     if (srcChanged) this.closeFullscreen();
     if (srcChanged || !this.view.editable) this.closeSizeEditor();
     if (changed) {
@@ -145,11 +164,100 @@ export class ImageNodeView {
     this.closeFullscreen();
     this.closeSizeEditor();
     this.unsubscribeLocale();
+    this.cancelPointerDrag();
     this.renderId += 1;
     this.finishPendingResolve?.();
     this.pendingResolve = null;
     this.finishPendingResolve = null;
     ImageNodeView.instances.delete(this.dom);
+  }
+
+  private beginPointerDrag(event: PointerEvent): void {
+    if (!this.view.editable || event.button !== 0 || this.drag) return;
+    if ((event.target as HTMLElement | null)?.closest('button')) return;
+    this.drag = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      active: false,
+      indicator: null,
+    };
+    document.addEventListener('pointermove', this.handleDocumentPointerMove, true);
+    document.addEventListener('pointerup', this.handleDocumentPointerUp, true);
+    document.addEventListener('pointercancel', this.handleDocumentPointerCancel, true);
+  }
+
+  private trackPointerDrag(event: PointerEvent): void {
+    const drag = this.drag;
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    if (!drag.active) {
+      if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 4) return;
+      drag.active = true;
+      this.dom.classList.add('is-dragging');
+      document.body.classList.add('is-image-dragging');
+      drag.indicator = document.createElement('div');
+      drag.indicator.className = 'image-drop-indicator';
+      document.body.appendChild(drag.indicator);
+    }
+    event.preventDefault();
+    event.stopPropagation();
+    this.updateDropIndicator(event);
+  }
+
+  private updateDropIndicator(event: PointerEvent): void {
+    const drag = this.drag;
+    if (!drag?.indicator) return;
+    const coords = this.view.posAtCoords({ left: event.clientX, top: event.clientY });
+    let left = event.clientX;
+    let top = event.clientY - 12;
+    let height = 24;
+    if (coords) {
+      try {
+        const caret = this.view.coordsAtPos(coords.pos);
+        left = caret.left;
+        top = caret.top;
+        height = Math.max(24, caret.bottom - caret.top);
+      } catch {
+        // coordsAtPos 在文档尽头等边界会抛错，退回鼠标位置。
+      }
+    }
+    drag.indicator.style.left = `${left}px`;
+    drag.indicator.style.top = `${top}px`;
+    drag.indicator.style.height = `${height}px`;
+    drag.indicator.classList.toggle(
+      'is-invalid',
+      !coords || !moveImageTransaction(this.view.state, this.getPos(), coords.pos),
+    );
+  }
+
+  private finishPointerDrag(event: PointerEvent, cancelled = false): void {
+    const drag = this.drag;
+    if (!drag || event.pointerId !== drag.pointerId) return;
+    this.removeDragListeners();
+    drag.indicator?.remove();
+    this.dom.classList.remove('is-dragging');
+    document.body.classList.remove('is-image-dragging');
+    this.drag = null;
+    if (cancelled || !drag.active) return;
+    event.preventDefault();
+    const coords = this.view.posAtCoords({ left: event.clientX, top: event.clientY });
+    if (!coords) return;
+    const transaction = moveImageTransaction(this.view.state, this.getPos(), coords.pos);
+    if (transaction) this.view.dispatch(transaction.scrollIntoView());
+  }
+
+  private cancelPointerDrag(): void {
+    this.removeDragListeners();
+    this.drag?.indicator?.remove();
+    this.dom.classList.remove('is-dragging');
+    document.body.classList.remove('is-image-dragging');
+    this.drag = null;
+  }
+
+  private removeDragListeners(): void {
+    document.removeEventListener('pointermove', this.handleDocumentPointerMove, true);
+    document.removeEventListener('pointerup', this.handleDocumentPointerUp, true);
+    document.removeEventListener('pointercancel', this.handleDocumentPointerCancel, true);
   }
 
   private render(): void {

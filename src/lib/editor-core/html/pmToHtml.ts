@@ -1,6 +1,7 @@
 import type { Node as ProseMirrorNode } from 'prosemirror-model';
 import { createLinkAttrs } from '../link';
 import { escapeHtmlAttr } from '../markdownTokenizer';
+import { normalizeTextColor } from '../textColor';
 import { serializeHtmlAnchorOpen } from './htmlAnchor';
 
 /** 将 html_block 节点的全部允许行内内容序列化为可再次编辑的 HTML。 */
@@ -87,6 +88,12 @@ function wrapWithMarks(node: ProseMirrorNode, content: string): string {
       case 'kbd':
         content = '<kbd>' + content + '</kbd>';
         break;
+      case 'text_color': {
+        const color = normalizeTextColor(mark.attrs.color);
+        if (!color) break;
+        content = '<span style="color: ' + escapeHtmlAttr(color) + '">' + content + '</span>';
+        break;
+      }
       case 'link': {
         if (mark.attrs.html) {
           content = serializeHtmlAnchorOpen(mark.attrs) + content + '</a>';

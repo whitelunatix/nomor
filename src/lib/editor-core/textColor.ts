@@ -38,6 +38,19 @@ export function readTextColorFromStyle(style: string | null | undefined): string
   return match ? normalizeTextColor(match[1]) : null;
 }
 
+/**
+ * 仅当 style 只包含一条合法的 color 声明时返回规范化颜色。
+ *
+ * 可编辑 HTML 块没有通用 style 载体，只有这种单一声明能无损往返；
+ * 混入其它声明时保留原文回退，避免保存后悄悄丢样式。
+ */
+export function colorFromStyleOnly(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const style = value.trim().replace(/;+\s*$/, '');
+  const match = /^color\s*:\s*([^;]+)$/i.exec(style);
+  return match ? normalizeTextColor(match[1]) : null;
+}
+
 /** 导出 Word 需要 6 位十六进制（无 `#`）；无法无损转换时返回 null。 */
 export function textColorToHex(value: unknown): string | null {
   const color = normalizeTextColor(value);

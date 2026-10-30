@@ -22,4 +22,15 @@ describe('sanitizeHtml', () => {
     expect(sanitizeHtml('<div style="color: red">红</div>')).toBe('<div>红</div>');
     expect(sanitizeHtml('<script>alert(1)</script>')).not.toContain('<script');
   });
+
+  it('keeps image sources that the editor can resolve and rejects script protocols', () => {
+    const dataUri = 'data:image/png;base64,iVBORw0KGgo=';
+    expect(sanitizeHtml(`<img src="${dataUri}" alt="图">`)).toBe(
+      `<img src="${dataUri}" alt="图">`,
+    );
+    expect(sanitizeHtml('<img src="asset://localhost/a.png">')).toBe(
+      '<img src="asset://localhost/a.png">',
+    );
+    expect(sanitizeHtml('<img src="javascript:alert(1)">')).toBe('<img>');
+  });
 });
